@@ -75,7 +75,8 @@ export default {
 			},
 			backgroundImage: {
 				'gradient-hero': 'var(--gradient-hero)',
-				'gradient-card': 'var(--gradient-card)'
+				'gradient-card': 'var(--gradient-card)',
+				'gradient-offer': 'var(--gradient-offer)'
 			},
 			boxShadow: {
 				'glow': 'var(--shadow-glow)'
@@ -84,6 +85,10 @@ export default {
 				'smooth': 'var(--transition-smooth)'
 			},
 			keyframes: {
+				'scroll-left': {
+					'0%': { transform: 'translateX(100%)' },
+					'100%': { transform: 'translateX(-100%)' }
+				},
 				'accordion-down': {
 					from: {
 						height: '0'
@@ -103,7 +108,8 @@ export default {
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'scroll-left': 'scroll-left 20s linear infinite'
 			}
 		}
 	},

@@ -19,7 +19,7 @@ export const Header = () => {
       {/* Top bar */}
       <div className="bg-gradient-hero px-4 py-2">
         <div className="container mx-auto flex items-center justify-between text-sm text-primary-foreground">
-          <div>Free shipping on orders over $50</div>
+          <div>Free shipping on orders over ₹499</div>
           <div className="flex items-center gap-4">
             <span>Sell on MarketPlace</span>
             <span>Help & Support</span>

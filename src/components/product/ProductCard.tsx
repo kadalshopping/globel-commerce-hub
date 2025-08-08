@@ -77,10 +77,10 @@ export const ProductCard = ({
 
         {/* Price */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-lg font-bold text-primary">${price}</span>
+          <span className="text-lg font-bold text-primary">₹{price.toLocaleString('en-IN')}</span>
           {originalPrice && (
             <span className="text-sm text-muted-foreground line-through">
-              ${originalPrice}
+              ₹{originalPrice.toLocaleString('en-IN')}
             </span>
           )}
         </div>

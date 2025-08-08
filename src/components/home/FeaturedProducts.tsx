@@ -4,8 +4,8 @@ const featuredProducts = [
   {
     id: "1",
     title: "Wireless Bluetooth Headphones with Noise Cancellation",
-    price: 89.99,
-    originalPrice: 129.99,
+    price: 7499,
+    originalPrice: 10999,
     image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
     rating: 4.5,
     reviewCount: 1284,
@@ -14,8 +14,8 @@ const featuredProducts = [
   {
     id: "2",
     title: "Premium Cotton T-Shirt - Comfortable Everyday Wear",
-    price: 24.99,
-    originalPrice: 39.99,
+    price: 1999,
+    originalPrice: 3199,
     image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop",
     rating: 4.3,
     reviewCount: 892,
@@ -24,7 +24,7 @@ const featuredProducts = [
   {
     id: "3",
     title: "Smart Watch with Fitness Tracking and Heart Monitor",
-    price: 199.99,
+    price: 16999,
     image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop",
     rating: 4.7,
     reviewCount: 2156,
@@ -32,8 +32,8 @@ const featuredProducts = [
   {
     id: "4",
     title: "Professional Camera Lens 50mm f/1.8 for Photography",
-    price: 449.99,
-    originalPrice: 599.99,
+    price: 37999,
+    originalPrice: 49999,
     image: "https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=400&h=400&fit=crop",
     rating: 4.8,
     reviewCount: 756,
@@ -42,7 +42,7 @@ const featuredProducts = [
   {
     id: "5",
     title: "Gaming Mechanical Keyboard RGB Backlight",
-    price: 129.99,
+    price: 10999,
     image: "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=400&h=400&fit=crop",
     rating: 4.4,
     reviewCount: 1432,
@@ -50,8 +50,8 @@ const featuredProducts = [
   {
     id: "6",
     title: "Portable Power Bank 20000mAh Fast Charging",
-    price: 39.99,
-    originalPrice: 59.99,
+    price: 3299,
+    originalPrice: 4999,
     image: "https://images.unsplash.com/photo-1609592094725-7bb71b0b8f39?w=400&h=400&fit=crop",
     rating: 4.2,
     reviewCount: 967,
