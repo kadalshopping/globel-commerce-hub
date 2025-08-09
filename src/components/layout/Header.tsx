@@ -31,9 +31,14 @@ export const Header = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center gap-8">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-hero"></div>
-            <h1 className="text-2xl font-bold text-primary">MarketPlace</h1>
+          <div className="flex items-center gap-3">
+            <div className="relative h-10 w-10 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center shadow-lg">
+              <span className="text-yellow-400 font-poppins font-black text-xl">K</span>
+            </div>
+            <h1 className="text-2xl font-poppins font-bold text-primary">
+              <span className="text-red-600">kadal</span>
+              <span className="text-foreground ml-1">shopping</span>
+            </h1>
           </div>
 
           {/* Search */}
