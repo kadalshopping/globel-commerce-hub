@@ -1,6 +1,8 @@
 import { ProductCard } from "@/components/product/ProductCard";
+import { useProducts } from "@/hooks/useProducts";
 
-const featuredProducts = [
+// Fallback products for when database is empty
+const fallbackProducts = [
   {
     id: "1",
     title: "Wireless Bluetooth Headphones with Noise Cancellation",
@@ -60,6 +62,23 @@ const featuredProducts = [
 ];
 
 export const FeaturedProducts = () => {
+  const { data: approvedProducts = [], isLoading } = useProducts();
+  
+  // Use approved products from database, fallback to static products if empty
+  const displayProducts = approvedProducts.length > 0 ? 
+    approvedProducts.slice(0, 6).map(product => ({
+      id: product.id,
+      title: product.title,
+      price: product.selling_price,
+      originalPrice: product.mrp !== product.selling_price ? product.mrp : undefined,
+      image: product.images?.[0] || "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=400&h=400&fit=crop",
+      rating: 4.5, // Default rating since we don't have reviews yet
+      reviewCount: Math.floor(Math.random() * 1000) + 100, // Random review count for demo
+      discount: product.mrp !== product.selling_price ? 
+        Math.round(((product.mrp - product.selling_price) / product.mrp) * 100) : undefined,
+    })) : 
+    fallbackProducts;
+
   return (
     <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
@@ -70,11 +89,17 @@ export const FeaturedProducts = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product.id} {...product} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Loading products...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+            {displayProducts.map((product) => (
+              <ProductCard key={product.id} {...product} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
