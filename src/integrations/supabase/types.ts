@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      products: {
+        Row: {
+          admin_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
+          brand: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          discount_percentage: number | null
+          id: string
+          images: string[] | null
+          mrp: number
+          selling_price: number
+          shop_owner_id: string
+          sku: string | null
+          status: Database["public"]["Enums"]["product_status"]
+          stock_quantity: number | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          brand?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          images?: string[] | null
+          mrp: number
+          selling_price: number
+          shop_owner_id: string
+          sku?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          stock_quantity?: number | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          brand?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          images?: string[] | null
+          mrp?: number
+          selling_price?: number
+          shop_owner_id?: string
+          sku?: string | null
+          status?: Database["public"]["Enums"]["product_status"]
+          stock_quantity?: number | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -83,6 +149,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "shop_owner"
+      product_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -211,6 +278,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user", "shop_owner"],
+      product_status: ["pending", "approved", "rejected"],
     },
   },
 } as const
