@@ -139,11 +139,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_product: {
+        Args: { product_id: string; admin_notes_text?: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
         }
+        Returns: boolean
+      }
+      reject_product: {
+        Args: { product_id: string; admin_notes_text: string }
         Returns: boolean
       }
     }
