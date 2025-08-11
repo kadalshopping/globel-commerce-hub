@@ -76,8 +76,9 @@ export const FeaturedProducts = () => {
       reviewCount: Math.floor(Math.random() * 1000) + 100, // Random review count for demo
       discount: product.mrp !== product.selling_price ? 
         Math.round(((product.mrp - product.selling_price) / product.mrp) * 100) : undefined,
+      stockQuantity: product.stock_quantity || 0,
     })) : 
-    fallbackProducts;
+    fallbackProducts.map(product => ({ ...product, stockQuantity: 10 }));
 
   return (
     <section className="py-16 bg-background">

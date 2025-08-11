@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 import { 
   Search, 
-  ShoppingCart, 
   User, 
   Menu,
   Heart,
@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 
 export const Header = () => {
-  const [cartCount] = useState(3);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -115,17 +114,7 @@ export const Header = () => {
               </Button>
             )}
 
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                >
-                  {cartCount}
-                </Badge>
-              )}
-            </Button>
+            <CartDrawer />
 
             <Button variant="ghost" size="icon" className="md:hidden">
               <Menu className="h-5 w-5" />

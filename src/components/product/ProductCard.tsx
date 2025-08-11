@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,9 +17,11 @@ interface ProductCardProps {
   reviewCount: number;
   discount?: number;
   isWishlisted?: boolean;
+  stockQuantity?: number;
 }
 
 export const ProductCard = ({
+  id,
   title,
   price,
   originalPrice,
@@ -27,8 +30,10 @@ export const ProductCard = ({
   reviewCount,
   discount,
   isWishlisted = false,
+  stockQuantity = 0,
 }: ProductCardProps) => {
   const { user } = useAuth();
+  const { addToCart } = useCart();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -38,10 +43,22 @@ export const ProductCard = ({
       return;
     }
     
-    // Add to cart logic here
-    toast({
-      title: "Added to Cart",
-      description: `${title} has been added to your cart.`,
+    if (stockQuantity <= 0) {
+      toast({
+        title: "Out of Stock",
+        description: "This item is currently out of stock.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addToCart({
+      id: `cart_${id}`,
+      productId: id,
+      title,
+      price,
+      image,
+      maxStock: stockQuantity,
     });
   };
   return (
