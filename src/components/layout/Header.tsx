@@ -1,18 +1,37 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
   Search, 
   ShoppingCart, 
   User, 
   Menu,
   Heart,
-  Bell
+  Bell,
+  LogOut
 } from "lucide-react";
 
 export const Header = () => {
   const [cartCount] = useState(3);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleAuthClick = () => {
+    if (user) {
+      return;
+    } else {
+      navigate('/auth');
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -68,10 +87,33 @@ export const Header = () => {
               <Bell className="h-5 w-5" />
             </Button>
 
-            <Button variant="ghost" className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              <span className="hidden md:inline">Sign In</span>
-            </Button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    <span className="hidden md:inline">Account</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate('/admin')}>
+                    Admin Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/shop')}>
+                    Shop Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="ghost" className="flex items-center gap-2" onClick={handleAuthClick}>
+                <User className="h-5 w-5" />
+                <span className="hidden md:inline">Sign In</span>
+              </Button>
+            )}
 
             <Button variant="ghost" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />

@@ -1,7 +1,10 @@
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Heart, ShoppingCart } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProductCardProps {
   id: string;
@@ -25,6 +28,22 @@ export const ProductCard = ({
   discount,
   isWishlisted = false,
 }: ProductCardProps) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleAddToCart = () => {
+    if (!user) {
+      navigate('/auth?redirect=' + encodeURIComponent(window.location.pathname));
+      return;
+    }
+    
+    // Add to cart logic here
+    toast({
+      title: "Added to Cart",
+      description: `${title} has been added to your cart.`,
+    });
+  };
   return (
     <Card className="group relative overflow-hidden border-0 shadow-sm hover:shadow-glow transition-all duration-300 bg-gradient-card">
       {/* Discount badge */}
@@ -86,7 +105,7 @@ export const ProductCard = ({
         </div>
 
         {/* Add to cart button */}
-        <Button variant="cart" className="w-full">
+        <Button variant="cart" className="w-full" onClick={handleAddToCart}>
           <ShoppingCart className="h-4 w-4 mr-2" />
           Add to Cart
         </Button>
