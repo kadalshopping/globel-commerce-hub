@@ -12,13 +12,22 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Received request body')
     const { amount, currency, receipt, cart_items } = await req.json()
+    console.log('Parsed request:', { amount, currency, receipt, itemCount: cart_items?.length })
 
     // Get Razorpay credentials from secrets
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID')
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
 
+    console.log('Checking credentials:', { 
+      hasKeyId: !!razorpayKeyId, 
+      hasSecret: !!razorpayKeySecret,
+      keyIdLength: razorpayKeyId?.length || 0
+    })
+
     if (!razorpayKeyId || !razorpayKeySecret) {
+      console.error('Missing Razorpay credentials')
       throw new Error('Razorpay credentials not configured')
     }
 
@@ -34,6 +43,7 @@ serve(async (req) => {
 
     const auth = btoa(`${razorpayKeyId}:${razorpayKeySecret}`)
     
+    console.log('Calling Razorpay API with order data:', orderData)
     const response = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
       headers: {
@@ -43,12 +53,16 @@ serve(async (req) => {
       body: JSON.stringify(orderData),
     })
 
+    console.log('Razorpay API response status:', response.status)
+
     if (!response.ok) {
       const errorData = await response.text()
-      throw new Error(`Razorpay API error: ${errorData}`)
+      console.error('Razorpay API error response:', errorData)
+      throw new Error(`Razorpay API error (${response.status}): ${errorData}`)
     }
 
     const order = await response.json()
+    console.log('Created Razorpay order:', order)
 
     // Return order details with key_id for frontend
     return new Response(

@@ -67,6 +67,7 @@ export const PaymentButton = () => {
       }
 
       // Create order on backend
+      console.log('Creating Razorpay order with cart total:', cart.total);
       const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
           amount: Math.round(cart.total * 100), // Convert to paise
@@ -76,8 +77,15 @@ export const PaymentButton = () => {
         },
       });
 
+      console.log('Razorpay order response:', { orderData, orderError });
+
       if (orderError) {
-        throw new Error(orderError.message);
+        console.error('Razorpay order error details:', orderError);
+        throw new Error(`Order creation failed: ${orderError.message || 'Unknown error'}`);
+      }
+
+      if (!orderData) {
+        throw new Error('No order data received from server');
       }
 
       // Razorpay payment options
@@ -91,7 +99,8 @@ export const PaymentButton = () => {
         handler: async (response: any) => {
           try {
             // Verify payment on backend
-            const { error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+            console.log('Verifying payment:', response);
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
               body: {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
@@ -99,8 +108,11 @@ export const PaymentButton = () => {
               },
             });
 
+            console.log('Payment verification response:', { verifyData, verifyError });
+
             if (verifyError) {
-              throw new Error('Payment verification failed');
+              console.error('Payment verification error details:', verifyError);
+              throw new Error(`Payment verification failed: ${verifyError.message || 'Unknown error'}`);
             }
 
             // Clear cart and show success message

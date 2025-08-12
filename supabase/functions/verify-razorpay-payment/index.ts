@@ -13,12 +13,15 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Payment verification request received')
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json()
+    console.log('Payment details:', { razorpay_order_id, razorpay_payment_id, hasSignature: !!razorpay_signature })
 
     // Get Razorpay secret from environment
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
 
     if (!razorpayKeySecret) {
+      console.error('Missing Razorpay secret')
       throw new Error('Razorpay secret not configured')
     }
 

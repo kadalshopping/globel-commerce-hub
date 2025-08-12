@@ -20,8 +20,8 @@ export const AdminProductManagement = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Check if user is admin (you may need to implement this check based on your auth system)
-  const isAdmin = user?.user_metadata?.role === 'admin';
+  // Check if user is admin using the has_role function or user metadata
+  const isAdmin = user?.user_metadata?.role === 'admin' || user?.app_metadata?.role === 'admin';
 
   if (!isAdmin) {
     return null;
@@ -185,10 +185,10 @@ const ProductManagementCard = ({ product, onEdit }: ProductManagementCardProps) 
           </div>
           
           <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-success" />
+            <DollarSign className="h-4 w-4 text-green-600" />
             <div>
               <p className="text-sm text-muted-foreground">Selling Price</p>
-              <p className="font-semibold text-success">₹{product.selling_price}</p>
+              <p className="font-semibold text-green-600">₹{product.selling_price}</p>
             </div>
           </div>
         </div>
