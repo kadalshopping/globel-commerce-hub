@@ -70,7 +70,7 @@ export const PaymentButton = () => {
       console.log('Creating Razorpay order with cart total:', cart.total);
       const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
-          amount: Math.round(cart.total * 100), // Convert to paise
+          amount: cart.total, // Keep as rupees, edge function will convert to paise
           currency: 'INR',
           receipt: `order_${Date.now()}`,
           cart_items: cart.items,

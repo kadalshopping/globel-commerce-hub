@@ -43,16 +43,20 @@ serve(async (req) => {
     });
 
     // Validate input
-    if (!body.amount || body.amount <= 0) {
+    if (!body.amount || typeof body.amount !== 'number' || body.amount <= 0) {
+      console.error('Invalid amount:', { amount: body.amount, type: typeof body.amount });
       throw new Error('Invalid amount');
     }
-    if (!body.currency) {
+    if (!body.currency || typeof body.currency !== 'string') {
+      console.error('Invalid currency:', { currency: body.currency, type: typeof body.currency });
       throw new Error('Currency is required');
     }
-    if (!body.receipt) {
+    if (!body.receipt || typeof body.receipt !== 'string') {
+      console.error('Invalid receipt:', { receipt: body.receipt, type: typeof body.receipt });
       throw new Error('Receipt is required');
     }
     if (!body.cart_items || !Array.isArray(body.cart_items) || body.cart_items.length === 0) {
+      console.error('Invalid cart items:', { cart_items: body.cart_items, isArray: Array.isArray(body.cart_items) });
       throw new Error('Cart items are required');
     }
 
