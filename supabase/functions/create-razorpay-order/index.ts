@@ -1,139 +1,161 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
-interface CreateOrderRequest {
+interface OrderRequest {
   amount: number;
   currency: string;
   receipt: string;
-  cart_items: Array<{
-    id: string;
-    title: string;
-    price: number;
-    quantity: number;
-  }>;
+  cart_items: any[];
+}
+
+interface RazorpayOrderData {
+  amount: number;
+  currency: string;
+  receipt: string;
+  notes: {
+    items: string;
+  };
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
+  // Only allow POST requests
   if (req.method !== 'POST') {
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }),
-      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      {
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
   }
 
   try {
-    console.log('=== CREATE RAZORPAY ORDER START ===');
-    
-    // Parse request body
-    const body: CreateOrderRequest = await req.json();
-    console.log('Request received:', {
-      amount: body.amount,
-      currency: body.currency,
-      receipt: body.receipt,
-      itemCount: body.cart_items?.length || 0
-    });
+    console.log('=== CREATE RAZORPAY ORDER START ===')
+    console.log('Request method:', req.method)
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()))
 
-    // Validate input
-    if (!body.amount || typeof body.amount !== 'number' || body.amount <= 0) {
-      console.error('Invalid amount:', { amount: body.amount, type: typeof body.amount });
-      throw new Error('Invalid amount');
-    }
-    if (!body.currency || typeof body.currency !== 'string') {
-      console.error('Invalid currency:', { currency: body.currency, type: typeof body.currency });
-      throw new Error('Currency is required');
-    }
-    if (!body.receipt || typeof body.receipt !== 'string') {
-      console.error('Invalid receipt:', { receipt: body.receipt, type: typeof body.receipt });
-      throw new Error('Receipt is required');
-    }
-    if (!body.cart_items || !Array.isArray(body.cart_items) || body.cart_items.length === 0) {
-      console.error('Invalid cart items:', { cart_items: body.cart_items, isArray: Array.isArray(body.cart_items) });
-      throw new Error('Cart items are required');
+    // Parse and validate request body
+    let requestBody: OrderRequest
+    try {
+      requestBody = await req.json()
+      console.log('Request body parsed successfully:', {
+        amount: requestBody.amount,
+        currency: requestBody.currency,
+        receipt: requestBody.receipt,
+        itemCount: requestBody.cart_items?.length || 0
+      })
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError)
+      throw new Error('Invalid request body format')
     }
 
-    // Get Razorpay credentials
-    const keyId = Deno.env.get('RAZORPAY_KEY_ID') || Deno.env.get('rzp_live_J1yY2Vjd9xDJzU');
-    const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET') || Deno.env.get('ze2OMOSFgeoCs99zFTCpx7Qp');
+    const { amount, currency, receipt, cart_items } = requestBody
 
-    console.log('Credentials check:', {
-      hasKeyId: !!keyId,
-      hasKeySecret: !!keySecret,
-      keyIdPreview: keyId ? `${keyId.substring(0, 8)}...` : 'MISSING'
-    });
-
-    if (!keyId || !keySecret) {
-      console.error('Missing Razorpay credentials');
-      throw new Error('Payment service not configured');
+    // Validate required fields
+    if (!amount || amount <= 0) {
+      throw new Error('Valid amount is required')
+    }
+    if (!currency) {
+      throw new Error('Currency is required')
+    }
+    if (!receipt) {
+      throw new Error('Receipt is required')
+    }
+    if (!cart_items || !Array.isArray(cart_items) || cart_items.length === 0) {
+      throw new Error('Cart items are required')
     }
 
-    // Prepare order data
-    const orderData = {
-      amount: Math.round(body.amount * 100), // Convert to paise
-      currency: body.currency.toUpperCase(),
-      receipt: body.receipt,
+    // Get Razorpay credentials from environment variables
+    const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID')
+    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
+
+    console.log('Environment check:', {
+      hasKeyId: !!razorpayKeyId,
+      hasSecret: !!razorpayKeySecret,
+      keyIdPreview: razorpayKeyId ? `${razorpayKeyId.substring(0, 8)}...` : 'NOT_SET'
+    })
+
+    if (!razorpayKeyId || !razorpayKeySecret) {
+      console.error('Razorpay credentials missing from environment')
+      throw new Error('Payment service configuration error')
+    }
+
+    // Prepare order data for Razorpay
+    const orderData: RazorpayOrderData = {
+      amount: Math.round(amount), // Ensure amount is integer (paise)
+      currency: currency.toUpperCase(),
+      receipt: receipt,
       notes: {
-        cart_items: JSON.stringify(body.cart_items.map(item => ({
-          id: item.id,
-          title: item.title,
-          price: item.price,
-          quantity: item.quantity
-        })))
+        items: JSON.stringify(cart_items)
       }
-    };
+    }
 
-    console.log('Creating order with amount:', orderData.amount, 'paise');
+    console.log('Creating Razorpay order with data:', {
+      ...orderData,
+      notes: { items: `[${cart_items.length} items]` } // Don't log full items for security
+    })
+
+    // Create Basic Auth header
+    const authString = `${razorpayKeyId}:${razorpayKeySecret}`
+    const authHeader = `Basic ${btoa(authString)}`
 
     // Call Razorpay API
-    const authHeader = 'Basic ' + btoa(`${keyId}:${keySecret}`);
-    
+    console.log('Calling Razorpay API...')
     const response = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
       headers: {
         'Authorization': authHeader,
         'Content-Type': 'application/json',
+        'User-Agent': 'Lovable-App/1.0'
       },
       body: JSON.stringify(orderData),
-    });
+    })
 
-    console.log('Razorpay API response status:', response.status);
+    console.log('Razorpay API response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries())
+    })
 
+    // Handle API response
     if (!response.ok) {
-      const errorText = await response.text();
+      const errorText = await response.text()
       console.error('Razorpay API error:', {
         status: response.status,
         statusText: response.statusText,
         body: errorText
-      });
+      })
       
-      let errorMessage = 'Failed to create payment order';
+      // Parse error details if possible
+      let errorMessage = 'Payment service error'
       try {
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.error?.description || errorData.message || errorMessage;
+        const errorData = JSON.parse(errorText)
+        errorMessage = errorData.error?.description || errorData.message || errorMessage
       } catch {
-        errorMessage = `Payment service error (${response.status})`;
+        errorMessage = `Payment service returned ${response.status}: ${response.statusText}`
       }
       
-      throw new Error(errorMessage);
+      throw new Error(errorMessage)
     }
 
-    const order = await response.json();
-    console.log('Order created successfully:', {
+    const order = await response.json()
+    console.log('Razorpay order created successfully:', {
       id: order.id,
       amount: order.amount,
       currency: order.currency,
       status: order.status
-    });
+    })
 
-    // Return response
+    // Prepare response
     const responseData = {
       id: order.id,
       amount: order.amount,
@@ -141,33 +163,43 @@ serve(async (req) => {
       receipt: order.receipt,
       status: order.status,
       created_at: order.created_at,
-      razorpay_key_id: keyId
-    };
+      razorpay_key_id: razorpayKeyId
+    }
 
-    console.log('=== CREATE RAZORPAY ORDER SUCCESS ===');
-    
+    console.log('=== CREATE RAZORPAY ORDER SUCCESS ===')
     return new Response(
       JSON.stringify(responseData),
       {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
+      },
+    )
 
   } catch (error) {
-    console.error('=== CREATE RAZORPAY ORDER ERROR ===');
-    console.error('Error:', error.message);
-    console.error('Stack:', error.stack);
+    console.error('=== CREATE RAZORPAY ORDER ERROR ===')
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    })
 
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    
     return new Response(
-      JSON.stringify({
-        error: error.message || 'Internal server error',
+      JSON.stringify({ 
+        error: errorMessage,
         timestamp: new Date().toISOString()
       }),
       {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+        status: 400,
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
+      },
+    )
   }
-});
+})
