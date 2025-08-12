@@ -1,79 +1,196 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { hmac } from "https://deno.land/x/hmac@v2.0.1/mod.ts"
+import { createHmac } from "https://deno.land/std@0.168.0/crypto/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+interface PaymentVerificationRequest {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      {
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    )
   }
 
   try {
-    console.log('Payment verification request received')
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json()
-    console.log('Payment details:', { razorpay_order_id, razorpay_payment_id, hasSignature: !!razorpay_signature })
+    console.log('=== VERIFY RAZORPAY PAYMENT START ===')
+    console.log('Request method:', req.method)
+
+    // Parse and validate request body
+    let requestBody: PaymentVerificationRequest
+    try {
+      requestBody = await req.json()
+      console.log('Payment verification request:', {
+        order_id: requestBody.razorpay_order_id,
+        payment_id: requestBody.razorpay_payment_id,
+        hasSignature: !!requestBody.razorpay_signature
+      })
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError)
+      throw new Error('Invalid request body format')
+    }
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = requestBody
+
+    // Validate required fields
+    if (!razorpay_order_id) {
+      throw new Error('Order ID is required')
+    }
+    if (!razorpay_payment_id) {
+      throw new Error('Payment ID is required')
+    }
+    if (!razorpay_signature) {
+      throw new Error('Payment signature is required')
+    }
 
     // Get Razorpay secret from environment
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
-
     if (!razorpayKeySecret) {
-      console.error('Missing Razorpay secret')
-      throw new Error('Razorpay secret not configured')
+      console.error('Razorpay secret not found in environment')
+      throw new Error('Payment verification service not configured')
     }
 
-    // Verify the payment signature
-    const body = razorpay_order_id + "|" + razorpay_payment_id
-    const expectedSignature = hmac("sha256", razorpayKeySecret, body, "utf8", "hex")
+    console.log('Environment check passed')
+
+    // Verify the payment signature using HMAC-SHA256
+    const payloadString = `${razorpay_order_id}|${razorpay_payment_id}`
+    console.log('Signature verification payload:', payloadString)
+
+    // Create HMAC signature
+    const key = new TextEncoder().encode(razorpayKeySecret)
+    const data = new TextEncoder().encode(payloadString)
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      key,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    )
+    const signature = await crypto.subtle.sign('HMAC', cryptoKey, data)
+    const expectedSignature = Array.from(new Uint8Array(signature))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('')
+
+    console.log('Signature verification:', {
+      expected: expectedSignature.substring(0, 10) + '...',
+      received: razorpay_signature.substring(0, 10) + '...',
+      match: expectedSignature === razorpay_signature
+    })
 
     if (expectedSignature !== razorpay_signature) {
-      throw new Error('Invalid payment signature')
+      console.error('Payment signature verification failed')
+      throw new Error('Invalid payment signature - payment verification failed')
     }
 
-    // Initialize Supabase client
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    console.log('Payment signature verified successfully')
 
-    // Get user from request
-    const authHeader = req.headers.get('authorization')!
+    // Initialize Supabase client for user authentication
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Supabase configuration missing')
+      throw new Error('Database service not configured')
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Get and verify user from authorization header
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader) {
+      throw new Error('Authorization header missing')
+    }
+
     const token = authHeader.replace('Bearer ', '')
-    const { data: { user } } = await supabase.auth.getUser(token)
-
-    if (!user) {
-      throw new Error('Unauthorized')
+    console.log('Verifying user authentication...')
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !user) {
+      console.error('User authentication failed:', authError)
+      throw new Error('User authentication failed')
     }
 
-    // Here you can store the payment details in your database
-    // For now, we'll just verify and return success
+    console.log('User authenticated successfully:', { userId: user.id })
+
+    // Here you can add database operations to store payment details
+    // For example, create a payments table record:
+    /*
+    const { error: dbError } = await supabase
+      .from('payments')
+      .insert({
+        user_id: user.id,
+        razorpay_order_id,
+        razorpay_payment_id,
+        amount: order_amount, // You might need to pass this in the request
+        status: 'completed',
+        verified_at: new Date().toISOString()
+      })
     
-    console.log('Payment verified successfully:', {
+    if (dbError) {
+      console.error('Failed to store payment record:', dbError)
+      throw new Error('Failed to record payment')
+    }
+    */
+
+    console.log('Payment verification completed successfully:', {
       order_id: razorpay_order_id,
       payment_id: razorpay_payment_id,
       user_id: user.id
     })
 
+    console.log('=== VERIFY RAZORPAY PAYMENT SUCCESS ===')
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: 'Payment verified successfully' 
+        message: 'Payment verified successfully',
+        data: {
+          order_id: razorpay_order_id,
+          payment_id: razorpay_payment_id,
+          verified_at: new Date().toISOString()
+        }
       }),
       {
+        status: 200,
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json' 
         },
       },
     )
+
   } catch (error) {
-    console.error('Payment verification error:', error)
+    console.error('=== VERIFY RAZORPAY PAYMENT ERROR ===')
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    })
+
+    const errorMessage = error instanceof Error ? error.message : 'Payment verification failed'
+    
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Payment verification failed' 
+        success: false,
+        error: errorMessage,
+        timestamp: new Date().toISOString()
       }),
       {
         status: 400,
