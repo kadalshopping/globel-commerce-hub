@@ -81,6 +81,13 @@ export const PaymentButton = () => {
 
       if (orderError) {
         console.error('Razorpay order error details:', orderError);
+        console.error('Full error object:', JSON.stringify(orderError, null, 2));
+        
+        // Check if it's a function invocation error
+        if (orderError.message?.includes('FunctionsHttpError') || orderError.message?.includes('FunctionsRelayError')) {
+          throw new Error(`Payment service unavailable. Please try again later. Error: ${orderError.message}`);
+        }
+        
         throw new Error(`Order creation failed: ${orderError.message || 'Unknown error'}`);
       }
 
