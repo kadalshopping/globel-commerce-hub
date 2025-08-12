@@ -1,1 +1,17 @@
 project_id = "ojgftnjpssnuarxpbweb"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[functions.create-razorpay-order]
+verify_jwt = true
+
+[functions.verify-razorpay-payment]
+verify_jwt = true
