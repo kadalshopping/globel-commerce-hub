@@ -3,7 +3,7 @@ import heroImage from "@/assets/hero-banner.jpg";
 
 export const HeroSection = () => {
   return (
-    <section className="relative h-96 bg-gradient-hero overflow-hidden">
+    <section className="relative h-64 sm:h-80 md:h-96 bg-gradient-hero overflow-hidden">
       <div className="absolute inset-0">
         <img
           src={heroImage}
@@ -14,21 +14,21 @@ export const HeroSection = () => {
       
       <div className="relative container mx-auto px-4 h-full flex items-center">
         <div className="max-w-2xl text-primary-foreground">
-          <h1 className="text-5xl font-bold mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 leading-tight">
             Discover Amazing Products
           </h1>
-          <p className="text-xl mb-6 opacity-90">
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-6 opacity-90 leading-relaxed">
             Shop millions of products from trusted sellers worldwide. 
             Great deals, fast shipping, and excellent customer service.
           </p>
-          <div className="flex gap-4">
-            <Button variant="hero" size="lg">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+            <Button variant="hero" size="lg" className="w-full sm:w-auto">
               Shop Now
             </Button>
             <Button 
               variant="outline" 
               size="lg"
-              className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
+              className="w-full sm:w-auto border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
             >
               Learn More
             </Button>
@@ -37,8 +37,8 @@ export const HeroSection = () => {
       </div>
 
       {/* Decorative elements */}
-      <div className="absolute top-10 right-10 w-20 h-20 bg-accent/20 rounded-full blur-xl"></div>
-      <div className="absolute bottom-10 left-10 w-32 h-32 bg-primary-foreground/10 rounded-full blur-2xl"></div>
+      <div className="absolute top-5 right-5 sm:top-10 sm:right-10 w-10 h-10 sm:w-20 sm:h-20 bg-accent/20 rounded-full blur-xl"></div>
+      <div className="absolute bottom-5 left-5 sm:bottom-10 sm:left-10 w-16 h-16 sm:w-32 sm:h-32 bg-primary-foreground/10 rounded-full blur-2xl"></div>
     </section>
   );
 };

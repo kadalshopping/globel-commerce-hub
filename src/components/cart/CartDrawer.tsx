@@ -20,12 +20,12 @@ export const CartDrawer = () => {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md">
+      <SheetContent className="w-full sm:max-w-md flex flex-col">
         <SheetHeader>
           <SheetTitle>Shopping Cart ({cart.itemCount} items)</SheetTitle>
         </SheetHeader>
         
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto py-4">
             {cart.items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
@@ -33,50 +33,55 @@ export const CartDrawer = () => {
                 <p className="text-muted-foreground">Your cart is empty</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {cart.items.map((item) => (
-                  <div key={item.productId} className="flex items-center space-x-3 border-b pb-4">
+                  <div key={item.productId} className="flex items-start space-x-3 border-b pb-3">
                     {item.image && (
                       <img
                         src={item.image}
                         alt={item.title}
-                        className="w-16 h-16 object-cover rounded"
+                        className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded flex-shrink-0"
                       />
                     )}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm truncate">{item.title}</h3>
-                      <p className="text-sm text-muted-foreground">₹{item.price}</p>
-                      <div className="flex items-center space-x-2 mt-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                          disabled={item.quantity <= 1}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="text-sm font-medium w-8 text-center">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                          disabled={item.quantity >= item.maxStock}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => removeFromCart(item.productId)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                      <h3 className="font-medium text-sm line-clamp-2 mb-1">{item.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">₹{item.price}</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 w-7 p-0"
+                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                            disabled={item.quantity <= 1}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="text-sm font-medium w-6 text-center">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 w-7 p-0"
+                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                            disabled={item.quantity >= item.maxStock}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <p className="font-medium text-sm">₹{(item.price * item.quantity).toFixed(2)}</p>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-destructive"
+                            onClick={() => removeFromCart(item.productId)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">₹{(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                   </div>
                 ))}

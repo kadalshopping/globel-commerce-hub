@@ -65,7 +65,7 @@ export const ProductCard = ({
     <Card className="group relative overflow-hidden border-0 shadow-sm hover:shadow-glow transition-all duration-300 bg-gradient-card">
       {/* Discount badge */}
       {discount && (
-        <Badge className="absolute top-2 left-2 z-10 bg-destructive text-destructive-foreground">
+        <Badge className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 bg-destructive text-destructive-foreground text-xs">
           -{discount}%
         </Badge>
       )}
@@ -74,9 +74,9 @@ export const ProductCard = ({
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-2 right-2 z-10 h-8 w-8 bg-background/80 hover:bg-background"
+        className="absolute top-1 right-1 sm:top-2 sm:right-2 z-10 h-6 w-6 sm:h-8 sm:w-8 bg-background/80 hover:bg-background"
       >
-        <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-destructive text-destructive' : ''}`} />
+        <Heart className={`h-3 w-3 sm:h-4 sm:w-4 ${isWishlisted ? 'fill-destructive text-destructive' : ''}`} />
       </Button>
 
       {/* Product image */}
@@ -89,8 +89,8 @@ export const ProductCard = ({
       </div>
 
       {/* Product info */}
-      <div className="p-4">
-        <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-2">
+      <div className="p-2 sm:p-4">
+        <h3 className="text-xs sm:text-sm font-medium text-foreground line-clamp-2 mb-2 leading-tight">
           {title}
         </h3>
 
@@ -100,7 +100,7 @@ export const ProductCard = ({
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
                 key={i}
-                className={`h-3 w-3 ${
+                className={`h-2 w-2 sm:h-3 sm:w-3 ${
                   i < Math.floor(rating)
                     ? 'fill-accent text-accent'
                     : 'text-muted-foreground'
@@ -112,18 +112,18 @@ export const ProductCard = ({
         </div>
 
         {/* Price */}
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-lg font-bold text-primary">₹{price.toLocaleString('en-IN')}</span>
+        <div className="flex items-center gap-1 sm:gap-2 mb-2 sm:mb-3">
+          <span className="text-sm sm:text-lg font-bold text-primary">₹{price.toLocaleString('en-IN')}</span>
           {originalPrice && (
-            <span className="text-sm text-muted-foreground line-through">
+            <span className="text-xs sm:text-sm text-muted-foreground line-through">
               ₹{originalPrice.toLocaleString('en-IN')}
             </span>
           )}
         </div>
 
         {/* Add to cart button */}
-        <Button variant="cart" className="w-full" onClick={handleAddToCart}>
-          <ShoppingCart className="h-4 w-4 mr-2" />
+        <Button variant="cart" className="w-full text-xs sm:text-sm h-8 sm:h-10" onClick={handleAddToCart}>
+          <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
           Add to Cart
         </Button>
       </div>
