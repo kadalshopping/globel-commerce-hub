@@ -61,8 +61,8 @@ serve(async (req) => {
     }
 
     // Get Razorpay credentials
-    const keyId = Deno.env.get('RAZORPAY_KEY_ID');
-    const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
+    const keyId = Deno.env.get('RAZORPAY_KEY_ID') || Deno.env.get('rzp_live_J1yY2Vjd9xDJzU');
+    const keySecret = Deno.env.get('RAZORPAY_KEY_SECRET') || Deno.env.get('ze2OMOSFgeoCs99zFTCpx7Qp');
 
     console.log('Credentials check:', {
       hasKeyId: !!keyId,
