@@ -61,9 +61,9 @@ export const AdminOrderManagement = () => {
       <TableBody>
         {items.map((item) => (
           <TableRow key={item.id}>
-            <TableCell className="font-medium">#{item.order?.order_number}</TableCell>
+            <TableCell>#{item.order?.order_number}</TableCell>
             <TableCell>{item.product?.title}</TableCell>
-            <TableCell>{item.order?.profiles?.full_name}</TableCell>
+            <TableCell>Order #{item.order?.order_number}</TableCell>
             <TableCell>{item.quantity}</TableCell>
             <TableCell>₹{item.price}</TableCell>
             <TableCell>{getStatusBadge(item.status)}</TableCell>

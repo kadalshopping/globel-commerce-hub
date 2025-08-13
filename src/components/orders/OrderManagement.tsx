@@ -61,7 +61,7 @@ export const OrderManagement = () => {
         </div>
 
         <div className="mb-3">
-          <p className="text-sm text-muted-foreground">Customer: {item.order?.profiles?.full_name}</p>
+          <p className="text-sm text-muted-foreground">Customer: Order #{item.order?.order_number}</p>
           {item.order?.delivery_address && (
             <div className="text-xs text-muted-foreground mt-1">
               <p>Delivery Address:</p>

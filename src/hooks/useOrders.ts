@@ -32,6 +32,14 @@ export interface OrderItem {
   created_at: string;
   updated_at: string;
   product?: any;
+  order?: {
+    order_number?: string;
+    delivery_address?: any;
+    user_id?: string;
+    profiles?: {
+      full_name?: string;
+    };
+  };
 }
 
 export interface PayoutRequest {
@@ -73,7 +81,7 @@ export const useShopOwnerOrderItems = () => {
         .select(`
           *,
           product:products(id, title, images),
-          order:orders(order_number, delivery_address, user_id, profiles(full_name))
+          order:orders(order_number, delivery_address, user_id)
         `)
         .order('created_at', { ascending: false });
       
@@ -93,7 +101,7 @@ export const useAllOrderItems = () => {
         .select(`
           *,
           product:products(id, title, images),
-          order:orders(order_number, delivery_address, user_id, profiles(full_name))
+          order:orders(order_number, delivery_address, user_id)
         `)
         .order('created_at', { ascending: false });
       
