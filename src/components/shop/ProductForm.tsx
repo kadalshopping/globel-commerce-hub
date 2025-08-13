@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { ImageUpload } from '@/components/ui/image-upload';
 import {
   Form,
   FormControl,
@@ -37,6 +38,7 @@ type ProductFormData = z.infer<typeof productSchema>;
 export const ProductForm = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [images, setImages] = useState<string[]>([]);
   
   const createProduct = useCreateProduct();
   
@@ -87,6 +89,7 @@ export const ProductForm = () => {
       stock_quantity: data.stock_quantity,
       sku: data.sku,
       tags: tags.length > 0 ? tags : undefined,
+      images: images.length > 0 ? images : undefined,
       discount_percentage,
     });
   };
@@ -95,6 +98,7 @@ export const ProductForm = () => {
     form.reset();
     setTags([]);
     setTagInput('');
+    setImages([]);
   };
 
   if (createProduct.isSuccess) {
@@ -283,6 +287,12 @@ export const ProductForm = () => {
                 </div>
               )}
             </div>
+            
+            <ImageUpload
+              onImagesChange={setImages}
+              existingImages={images}
+              maxImages={5}
+            />
             
             <Button 
               type="submit" 

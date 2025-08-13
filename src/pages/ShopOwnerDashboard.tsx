@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductForm } from '@/components/shop/ProductForm';
+import { ProductEditDialog } from '@/components/product/ProductEditDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Package, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Plus, Package, CheckCircle, XCircle, Clock, Edit } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
@@ -40,11 +41,38 @@ const ShopOwnerDashboard = () => {
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between">
-            <CardTitle className="text-lg line-clamp-2">{product.title}</CardTitle>
-            <Badge variant="outline" className="flex items-center gap-1">
-              <StatusIcon className="h-3 w-3" />
-              {config.label}
-            </Badge>
+            <div className="flex-1">
+              <CardTitle className="text-lg line-clamp-2">{product.title}</CardTitle>
+              {product.images && product.images.length > 0 && (
+                <div className="mt-2">
+                  <img 
+                    src={product.images[0]} 
+                    alt={product.title}
+                    className="w-20 h-20 object-cover rounded-md"
+                    onError={(e) => {
+                      e.currentTarget.src = '/placeholder.svg';
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <Badge variant="outline" className="flex items-center gap-1">
+                <StatusIcon className="h-3 w-3" />
+                {config.label}
+              </Badge>
+              {(product.status === 'pending' || product.status === 'rejected') && (
+                <ProductEditDialog 
+                  product={product}
+                  trigger={
+                    <Button variant="outline" size="sm">
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                  }
+                />
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -55,14 +83,18 @@ const ShopOwnerDashboard = () => {
               </p>
             )}
             
-            <div className="flex justify-between items-center">
+            <div className="grid grid-cols-3 gap-2 text-sm">
               <div>
-                <p className="text-sm text-muted-foreground">Price</p>
+                <p className="text-muted-foreground">Price</p>
                 <p className="font-semibold">₹{product.selling_price}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">MRP</p>
+                <p className="text-muted-foreground">MRP</p>
                 <p className="font-semibold">₹{product.mrp}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Stock</p>
+                <p className="font-semibold">{product.stock_quantity}</p>
               </div>
             </div>
             
