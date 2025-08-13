@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AddressForm, Address } from '@/components/forms/AddressForm';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -13,6 +15,8 @@ declare global {
 
 export const PaymentButton = () => {
   const [loading, setLoading] = useState(false);
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState<Address | null>(null);
   const { cart, clearCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -38,7 +42,13 @@ export const PaymentButton = () => {
     });
   };
 
-  const handlePayment = async () => {
+  const handleAddressSubmit = (address: Address) => {
+    setDeliveryAddress(address);
+    setShowAddressForm(false);
+    handlePayment(address);
+  };
+
+  const handlePayment = async (address?: Address) => {
     if (!user) {
       toast({
         title: 'Authentication Required',
@@ -57,6 +67,13 @@ export const PaymentButton = () => {
       return;
     }
 
+    if (!address && !deliveryAddress) {
+      setShowAddressForm(true);
+      return;
+    }
+
+    const finalAddress = address || deliveryAddress;
+
     setLoading(true);
 
     try {
@@ -74,6 +91,7 @@ export const PaymentButton = () => {
           currency: 'INR',
           receipt: `order_${Date.now()}`,
           cart_items: cart.items,
+          delivery_address: finalAddress,
         },
       });
 
@@ -169,13 +187,27 @@ export const PaymentButton = () => {
   };
 
   return (
-    <Button 
-      onClick={handlePayment} 
-      disabled={loading || cart.items.length === 0}
-      className="w-full"
-      size="lg"
-    >
-      {loading ? 'Processing...' : `Pay ₹${cart.total.toFixed(2)}`}
-    </Button>
+    <>
+      <Button 
+        onClick={() => handlePayment()} 
+        disabled={loading || cart.items.length === 0}
+        className="w-full"
+        size="lg"
+      >
+        {loading ? 'Processing...' : `Pay ₹${cart.total.toFixed(2)}`}
+      </Button>
+
+      <Dialog open={showAddressForm} onOpenChange={setShowAddressForm}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Enter Delivery Address</DialogTitle>
+          </DialogHeader>
+          <AddressForm
+            onSubmit={handleAddressSubmit}
+            onCancel={() => setShowAddressForm(false)}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
