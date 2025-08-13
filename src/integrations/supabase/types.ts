@@ -295,6 +295,10 @@ export type Database = {
         Args: { product_id: string; admin_notes_text?: string }
         Returns: boolean
       }
+      get_product_image_url: {
+        Args: { bucket_name: string; file_path: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _user_id: string
