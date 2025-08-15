@@ -4,6 +4,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 declare global {
   interface Window {
@@ -51,41 +52,46 @@ const SimplePaymentButton = () => {
     setLoading(true);
 
     try {
-      console.log('🚀 Starting payment process...');
+      console.log('🚀 Starting payment with real Razorpay credentials...');
       
       // Load Razorpay script
-      console.log('📦 Loading Razorpay script...');
       const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        throw new Error('Failed to load payment gateway. Please check your internet connection.');
-      }
-      console.log('✅ Razorpay script loaded successfully');
-
-      // Check if Razorpay is available
-      if (!window.Razorpay) {
-        throw new Error('Payment gateway not available. Please refresh and try again.');
+      if (!scriptLoaded || !window.Razorpay) {
+        throw new Error('Failed to load payment gateway. Please refresh and try again.');
       }
 
-      // Create a simple order object with working test credentials
-      const orderData = {
-        amount: cart.total * 100, // Convert to paise
-        currency: 'INR',
-        name: 'Shopping Kadal',
-        description: `Payment for ${cart.itemCount} items`,
-        key: 'rzp_test_11Hg1Qfq0R2G06', // Known working test key
-        receipt: `receipt_${Date.now()}`,
-      };
+      // Create order via edge function (uses real keys)
+      const { data: orderData, error } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount: cart.total,
+          cartItems: cart.items.map(item => ({
+            productId: item.id,
+            title: item.title,
+            price: item.price,
+            quantity: item.quantity,
+            maxStock: item.maxStock
+          })),
+          deliveryAddress: {
+            fullName: user.user_metadata?.full_name || 'Customer',
+            email: user.email || 'customer@example.com'
+          }
+        }
+      });
 
-      console.log('💰 Order data:', orderData);
+      if (error || !orderData) {
+        throw new Error('Failed to create payment order');
+      }
+
+      console.log('✅ Order created with real keys:', orderData);
 
       const options = {
-        key: orderData.key,
+        key: orderData.razorpay_key_id, // Real key from backend
         amount: orderData.amount,
         currency: orderData.currency,
-        name: orderData.name,
-        description: orderData.description,
+        name: 'Shopping Kadal',
+        description: `Payment for ${cart.itemCount} items`,
+        order_id: orderData.razorpay_order_id,
         handler: function (response: any) {
-          // Payment successful
           console.log('✅ Payment successful:', response);
           
           toast({
@@ -93,7 +99,6 @@ const SimplePaymentButton = () => {
             description: `Payment completed successfully!`,
           });
 
-          // Clear cart and redirect
           clearCart();
           
           setTimeout(() => {
@@ -115,10 +120,7 @@ const SimplePaymentButton = () => {
         },
       };
 
-      console.log('🔧 Razorpay options:', options);
-      
       const paymentObject = new window.Razorpay(options);
-      console.log('🎯 Opening payment modal...');
       paymentObject.open();
       
     } catch (error) {

@@ -38,7 +38,7 @@ export const PendingPayments = () => {
     setProcessingOrderId(pendingOrder.id);
 
     try {
-      console.log('🚀 Starting direct payment completion for order:', pendingOrder.order_number);
+      console.log('🚀 Starting payment with real Razorpay credentials for order:', pendingOrder.order_number);
 
       // Load Razorpay script
       const scriptLoaded = await loadRazorpayScript();
@@ -46,103 +46,46 @@ export const PendingPayments = () => {
         throw new Error('Failed to load payment gateway');
       }
 
-      // For development: Create a direct payment simulation
-      const testPaymentData = {
-        razorpay_order_id: `order_test_${Date.now()}`,
-        razorpay_payment_id: `pay_test_${Date.now()}`,
-        razorpay_signature: `signature_test_${Date.now()}`
-      };
+      // Create order via edge function (uses real keys)
+      const { data: orderData, error } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount: pendingOrder.total_amount,
+          cartItems: pendingOrder.items,
+          deliveryAddress: pendingOrder.delivery_address
+        }
+      });
 
-      // Show mock Razorpay checkout for user experience
+      if (error || !orderData) {
+        throw new Error('Failed to create payment order');
+      }
+
+      console.log('✅ Payment order created with real keys:', orderData);
+
       const options = {
-        key: 'rzp_test_11111111111111', // Test key
-        amount: pendingOrder.total_amount * 100, // Convert to paise
-        currency: 'INR',
+        key: orderData.razorpay_key_id, // Real key from backend
+        amount: orderData.amount,
+        currency: orderData.currency,
         name: 'Your Store Name',
         description: `Order #${pendingOrder.order_number}`,
-        order_id: testPaymentData.razorpay_order_id,
+        order_id: orderData.razorpay_order_id,
         handler: async (response: any) => {
           try {
-            console.log('💳 Payment successful, creating order directly...', response);
+            console.log('💳 Payment successful, verifying...', response);
 
-            // Create confirmed order directly (bypassing edge functions)
-            const { data: confirmedOrder, error: orderError } = await supabase
-              .from('orders')
-              .insert({
-                user_id: user.id,
-                order_number: pendingOrder.order_number,
-                total_amount: pendingOrder.total_amount,
-                status: 'confirmed',
-                payment_status: 'completed',
-                payment_id: null,
-                razorpay_order_id: response.razorpay_order_id || testPaymentData.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id || testPaymentData.razorpay_payment_id,
-                delivery_address: pendingOrder.delivery_address,
-                items: pendingOrder.items,
-              })
-              .select()
-              .single();
-
-            if (orderError) {
-              throw new Error('Failed to create confirmed order');
-            }
-
-            console.log('✅ Confirmed order created:', confirmedOrder.id);
-
-            // Create order items for shop owners
-            const items = pendingOrder.items as any[];
-            for (const item of items) {
-              // Get product details to find shop_owner_id
-              const { data: product } = await supabase
-                .from('products')
-                .select('shop_owner_id')
-                .eq('id', item.productId)
-                .maybeSingle();
-
-              if (product) {
-                // Create order item
-                const { error: itemError } = await supabase
-                  .from('order_items')
-                  .insert({
-                    order_id: confirmedOrder.id,
-                    product_id: item.productId,
-                    shop_owner_id: product.shop_owner_id,
-                    quantity: item.quantity,
-                    price: item.price,
-                    status: 'pending'
-                  });
-
-                if (itemError) {
-                  console.error('Order item creation error:', itemError);
-                } else {
-                  console.log(`✅ Created order item for product ${item.productId}`);
-                }
-
-                // Update product stock
-                const { error: stockError } = await supabase.rpc('decrease_product_stock', {
-                  product_id_param: item.productId,
-                  quantity_param: item.quantity
-                });
-
-                if (stockError) {
-                  console.error('Stock update error:', stockError);
-                } else {
-                  console.log(`✅ Updated stock for product ${item.productId}`);
-                }
+            // Verify payment and create order via edge function
+            const { data: verificationResult, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
               }
+            });
+
+            if (verifyError || !verificationResult?.success) {
+              throw new Error('Payment verification failed');
             }
 
-            // Delete pending order
-            const { error: deleteError } = await supabase
-              .from('pending_orders')
-              .delete()
-              .eq('id', pendingOrder.id);
-
-            if (deleteError) {
-              console.error('Pending order deletion error:', deleteError);
-            } else {
-              console.log(`✅ Deleted pending order: ${pendingOrder.id}`);
-            }
+            console.log('✅ Payment verified and order created:', verificationResult);
 
             toast({
               title: '🎉 Payment Successful!',
@@ -153,10 +96,10 @@ export const PendingPayments = () => {
             refetch();
 
           } catch (error) {
-            console.error('❌ Order creation error:', error);
+            console.error('❌ Payment verification error:', error);
             toast({
-              title: 'Order Creation Failed',
-              description: 'Payment was processed but order creation failed. Please contact support.',
+              title: 'Payment Verification Failed',
+              description: 'Payment was processed but verification failed. Please contact support.',
               variant: 'destructive',
             });
           }
