@@ -183,11 +183,11 @@ export const PaymentButton = () => {
         throw new Error(orderResponse.error.message || 'Failed to create payment order');
       }
 
-      if (!orderResponse.data) {
+      if (!orderResponse.data?.success || !orderResponse.data?.data) {
         throw new Error('No order data received from server');
       }
 
-      const orderData = orderResponse.data;
+      const orderData = orderResponse.data.data; // Extract the nested data
 
       console.log('Opening Razorpay checkout with data:', {
         key: orderData.razorpay_key_id,
