@@ -29,8 +29,8 @@ serve(async (req) => {
     // Get environment variables
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const razorpayKeyId = Deno.env.get("RAZORPAY_KEY_ID") || "rzp_test_11111111111111";
-    const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET") || "test_secret_key";
+    const razorpayKeyId = Deno.env.get("RAZORPAY_KEY_ID");
+    const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
 
     console.log("🔧 Environment check:", {
       hasSupabaseUrl: !!supabaseUrl,
@@ -42,6 +42,11 @@ serve(async (req) => {
     if (!supabaseUrl || !supabaseAnonKey) {
       console.log("❌ Missing Supabase configuration");
       throw new Error("Missing Supabase configuration");
+    }
+
+    if (!razorpayKeyId || !razorpayKeySecret) {
+      console.log("❌ Missing Razorpay credentials");
+      throw new Error("Missing Razorpay credentials - please configure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in Supabase settings");
     }
 
     // Create Supabase client
