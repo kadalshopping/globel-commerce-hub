@@ -29,13 +29,13 @@ const DirectPaymentButton = () => {
     });
   };
 
-  const createOrderDirectly = async () => {
+  const createPendingOrder = async () => {
     const timestamp = Date.now();
     const orderNumber = `ORD-${timestamp}`;
     
-    // Create order directly in database
-    const { data: order, error } = await supabase
-      .from('orders')
+    // Create pending order in database
+    const { data: pendingOrder, error } = await supabase
+      .from('pending_orders')
       .insert({
         user_id: user?.id || '',
         total_amount: cart.total,
@@ -45,41 +45,17 @@ const DirectPaymentButton = () => {
         } as any,
         items: cart.items as any,
         order_number: orderNumber,
-        status: 'confirmed',
-        payment_status: 'completed',
-        razorpay_payment_id: `pay_test_${timestamp}`
+        razorpay_order_id: `temp_${timestamp}`
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Order creation error:', error);
-      throw new Error('Failed to create order');
+      console.error('Pending order creation error:', error);
+      throw new Error('Failed to create pending order');
     }
 
-    // Create order items
-    for (const item of cart.items) {
-      const { data: product } = await supabase
-        .from('products')
-        .select('shop_owner_id')
-        .eq('id', item.productId)
-        .single();
-
-      if (product) {
-        await supabase
-          .from('order_items')
-          .insert({
-            order_id: order.id,
-            product_id: item.productId,
-            shop_owner_id: product.shop_owner_id,
-            quantity: item.quantity,
-            price: item.price,
-            status: 'pending'
-          });
-      }
-    }
-
-    return order;
+    return pendingOrder;
   };
 
   const handlePayment = async () => {
@@ -113,21 +89,21 @@ const DirectPaymentButton = () => {
         throw new Error('Failed to load payment gateway');
       }
 
-      // Create order directly
-      const order = await createOrderDirectly();
-      console.log('✅ Order created directly:', order.order_number);
+      // Create pending order
+      const pendingOrder = await createPendingOrder();
+      console.log('✅ Pending order created:', pendingOrder.order_number);
 
-      // Show success immediately (simulating payment)
+      // Show success message
       toast({
-        title: '🎉 Order Placed Successfully!',
-        description: `Order #${order.order_number} has been confirmed`,
+        title: '🛒 Order Created!',
+        description: `Order #${pendingOrder.order_number} is pending payment. Complete it in your orders page.`,
       });
 
       clearCart();
       
       setTimeout(() => {
         navigate('/orders');
-      }, 1500);
+      }, 2000);
       
     } catch (error) {
       console.error('❌ Payment error:', error);
@@ -152,7 +128,7 @@ const DirectPaymentButton = () => {
       className="w-full"
       size="lg"
     >
-      {loading ? 'Processing...' : `Place Order ₹${cart.total.toFixed(2)}`}
+      {loading ? 'Creating Order...' : `Create Order ₹${cart.total.toFixed(2)}`}
     </Button>
   );
 };
