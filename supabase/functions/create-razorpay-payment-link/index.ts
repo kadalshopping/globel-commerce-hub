@@ -142,7 +142,7 @@ serve(async (req) => {
     console.log('Razorpay order created:', razorpayOrder.id);
 
     // Store pending order
-    const orderNumber = `ORD-${timestamp}`;
+    const orderNumber = `PAY-${razorpayOrder.id}`; // Use Razorpay order ID as base
     console.log('Creating pending order...');
     
     const { data: pendingOrder, error: dbError } = await supabase

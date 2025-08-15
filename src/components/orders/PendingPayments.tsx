@@ -90,11 +90,13 @@ export const PendingPayments = () => {
               try {
                 console.log('🔄 Attempting direct order creation...');
                 
+                // Create confirmed order directly with payment ID as order number
+                const orderNumber = response.razorpay_payment_id;
                 const { data: confirmedOrder, error: orderError } = await supabase
                   .from('orders')
                   .insert({
                     user_id: user.id,
-                    order_number: pendingOrder.order_number,
+                    order_number: orderNumber,
                     total_amount: pendingOrder.total_amount,
                     status: 'confirmed',
                     payment_status: 'completed',
@@ -149,7 +151,7 @@ export const PendingPayments = () => {
 
                 toast({
                   title: '🎉 Payment Successful!',
-                  description: `Order #${pendingOrder.order_number} has been confirmed`,
+                  description: `Order #${orderNumber} has been confirmed`,
                 });
 
               } catch (directError) {
@@ -167,7 +169,7 @@ export const PendingPayments = () => {
 
             toast({
               title: '🎉 Payment Successful!',
-              description: `Order #${pendingOrder.order_number} has been confirmed`,
+              description: `Order #${verificationResult.order_number} has been confirmed`,
             });
 
             // Refresh the orders list

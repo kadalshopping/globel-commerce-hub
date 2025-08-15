@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { verifyPaymentOrder, generateOrderNumber } from '@/utils/orderUtils';
 
 interface ManualPaymentVerificationProps {
   pendingOrder: any;
@@ -36,12 +37,25 @@ export const ManualPaymentVerification: React.FC<ManualPaymentVerificationProps>
     try {
       console.log('🔧 Manual payment verification for:', paymentId);
 
-      // Create confirmed order directly
+      // First check if order already exists with this payment ID
+      const verification = await verifyPaymentOrder(paymentId);
+      
+      if (verification.isValid && verification.order) {
+        toast({
+          title: '✅ Order Already Exists',
+          description: `Order #${paymentId} is already confirmed`,
+        });
+        onSuccess();
+        return;
+      }
+
+      // Create confirmed order directly with payment ID as order number
+      const orderNumber = generateOrderNumber(paymentId);
       const { data: confirmedOrder, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: user!.id,
-          order_number: pendingOrder.order_number,
+          order_number: orderNumber,
           total_amount: pendingOrder.total_amount,
           status: 'confirmed',
           payment_status: 'completed',
@@ -98,7 +112,7 @@ export const ManualPaymentVerification: React.FC<ManualPaymentVerificationProps>
 
       toast({
         title: '🎉 Payment Verified!',
-        description: `Order #${pendingOrder.order_number} has been confirmed`,
+        description: `Order #${orderNumber} has been confirmed`,
       });
 
       onSuccess();

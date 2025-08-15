@@ -108,12 +108,13 @@ serve(async (req) => {
 
     console.log(`Found pending order: ${pendingOrder.order_number}`);
 
-    // Create confirmed order
+    // Create confirmed order with Razorpay payment ID as order number
+    const orderNumber = razorpay_payment_id; // Use payment ID as order number
     const { data: confirmedOrder, error: orderError } = await supabaseService
       .from("orders")
       .insert({
         user_id: user.id,
-        order_number: pendingOrder.order_number,
+        order_number: orderNumber,
         total_amount: pendingOrder.total_amount,
         status: "confirmed",
         payment_status: "completed",

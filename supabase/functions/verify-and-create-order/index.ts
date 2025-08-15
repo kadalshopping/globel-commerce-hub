@@ -140,7 +140,8 @@ const findPendingOrder = async (supabase: any, razorpayOrderId: string, userId: 
 };
 
 const createOrder = async (supabase: any, pendingOrder: any, paymentId: string) => {
-  // Create the actual order
+  // Create the actual order with payment ID as order number
+  const orderNumber = paymentId; // Use payment ID as order number
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert({
@@ -148,7 +149,7 @@ const createOrder = async (supabase: any, pendingOrder: any, paymentId: string) 
       total_amount: pendingOrder.total_amount,
       delivery_address: pendingOrder.delivery_address,
       items: pendingOrder.items,
-      order_number: pendingOrder.order_number,
+      order_number: orderNumber,
       razorpay_order_id: pendingOrder.razorpay_order_id,
       razorpay_payment_id: paymentId,
       status: 'confirmed',
