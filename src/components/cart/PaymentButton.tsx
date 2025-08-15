@@ -207,8 +207,24 @@ export const PaymentButton = () => {
         handler: async (response: any) => {
           console.log('=== PAYMENT SUCCESSFUL ===');
           console.log('Razorpay response:', response);
+          console.log('Handler called with response:', {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            hasSignature: !!response.razorpay_signature
+          });
           
-          await handlePaymentSuccess(response, orderData);
+          try {
+            await handlePaymentSuccess(response, orderData);
+            console.log('Payment success handler completed');
+          } catch (error) {
+            console.error('Error in payment success handler:', error);
+            toast({
+              title: 'Payment Verification Failed',
+              description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+              variant: 'destructive',
+            });
+            setLoading(false);
+          }
         },
         prefill: {
           name: finalAddress.fullName,
@@ -229,18 +245,13 @@ export const PaymentButton = () => {
             setLoading(false);
           },
         },
-        error: {
-          handler: (error: any) => {
-            console.error('Razorpay payment error:', error);
-            toast({
-              title: 'Payment Failed',
-              description: error.description || 'Payment failed. Please try again.',
-              variant: 'destructive',
-            });
-            setLoading(false);
-          },
-        },
       };
+
+      console.log('About to open Razorpay with options:', {
+        key: options.key?.substring(0, 10) + '...',
+        amount: options.amount,
+        order_id: options.order_id
+      });
 
       const razorpay = new window.Razorpay(options);
       razorpay.open();
@@ -259,6 +270,12 @@ export const PaymentButton = () => {
   const handlePaymentSuccess = async (razorpayResponse: any, orderData: any) => {
     try {
       console.log('=== VERIFYING PAYMENT ===');
+      console.log('Payment verification inputs:', {
+        razorpay_order_id: razorpayResponse.razorpay_order_id,
+        razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+        hasSignature: !!razorpayResponse.razorpay_signature,
+        orderData: orderData
+      });
       
       // Show verification progress
       toast({
@@ -267,6 +284,7 @@ export const PaymentButton = () => {
       });
 
       // Verify payment with backend
+      console.log('Making verification request...');
       const verificationResponse = await supabase.functions.invoke('verify-razorpay-payment', {
         body: {
           razorpay_order_id: razorpayResponse.razorpay_order_id,
@@ -275,13 +293,15 @@ export const PaymentButton = () => {
         },
       });
 
-      console.log('Verification response:', verificationResponse);
+      console.log('Verification response received:', verificationResponse);
 
       if (verificationResponse.error) {
+        console.error('Verification error:', verificationResponse.error);
         throw new Error(verificationResponse.error.message || 'Payment verification failed');
       }
 
       if (!verificationResponse.data?.success) {
+        console.error('Verification failed:', verificationResponse.data);
         throw new Error(verificationResponse.data?.error || 'Payment verification failed');
       }
 
