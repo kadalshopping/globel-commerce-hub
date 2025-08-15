@@ -10,6 +10,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { ManualPaymentVerification } from "./ManualPaymentVerification";
+import { PaymentDebugInfo } from "./PaymentDebugInfo";
 
 declare global {
   interface Window {
@@ -49,6 +50,7 @@ export const PendingPayments = () => {
       }
 
       // Create order via edge function (uses real keys)
+      console.log('📞 Calling create-razorpay-order edge function...');
       const { data: orderData, error } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
           amount: pendingOrder.total_amount,
@@ -57,8 +59,16 @@ export const PendingPayments = () => {
         }
       });
 
-      if (error || !orderData) {
-        throw new Error('Failed to create payment order');
+      console.log('📦 Edge function response:', { orderData, error });
+
+      if (error) {
+        console.error('❌ Edge function error:', error);
+        throw new Error(`Edge function failed: ${error.message || 'Unknown error'}`);
+      }
+
+      if (!orderData || !orderData.success) {
+        console.error('❌ Invalid response from edge function:', orderData);
+        throw new Error('Failed to create payment order - invalid response');
       }
 
       console.log('✅ Payment order created with real keys:', orderData);
@@ -439,6 +449,8 @@ export const PendingPayments = () => {
                     Cancel
                   </Button>
                 </div>
+                
+                <PaymentDebugInfo pendingOrder={pendingOrder} />
                 
                 {showManualVerification === pendingOrder.id && (
                   <ManualPaymentVerification
