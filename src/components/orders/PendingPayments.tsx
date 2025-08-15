@@ -47,6 +47,7 @@ export const PendingPayments = () => {
       }
 
       // Create Razorpay order using edge function
+      console.log('📞 Calling create-razorpay-order edge function...');
       const { data: razorpayData, error: razorpayError } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
           amount: pendingOrder.total_amount,
@@ -55,8 +56,16 @@ export const PendingPayments = () => {
         }
       });
 
-      if (razorpayError || !razorpayData) {
-        throw new Error('Failed to create Razorpay order');
+      console.log('📊 Edge function response:', { razorpayData, razorpayError });
+
+      if (razorpayError) {
+        console.error('❌ Edge function error:', razorpayError);
+        throw new Error(`Edge function error: ${razorpayError.message || 'Unknown error'}`);
+      }
+
+      if (!razorpayData || !razorpayData.success) {
+        console.error('❌ Invalid response from edge function:', razorpayData);
+        throw new Error(razorpayData?.error || 'Failed to create Razorpay order');
       }
 
       console.log('✅ Razorpay order created:', razorpayData);
