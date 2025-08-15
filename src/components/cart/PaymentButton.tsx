@@ -136,7 +136,7 @@ export const PaymentButton = () => {
             // Verify payment on backend
             console.log('Starting payment verification...');
             
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+            const verificationResult = await supabase.functions.invoke('verify-razorpay-payment', {
               body: {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
@@ -144,18 +144,18 @@ export const PaymentButton = () => {
               },
             });
 
-            console.log('Payment verification response:', { verifyData, verifyError });
+            console.log('Payment verification result:', verificationResult);
 
-            if (verifyError) {
-              console.error('Payment verification error details:', verifyError);
-              throw new Error(verifyError.message || 'Verification failed');
+            if (verificationResult.error) {
+              console.error('Payment verification error:', verificationResult.error);
+              throw new Error(verificationResult.error.message || 'Verification failed');
             }
 
-            if (!verifyData?.success) {
-              console.error('Payment verification failed:', verifyData);
+            if (!verificationResult.data?.success) {
+              console.error('Payment verification failed:', verificationResult.data);
               toast({
                 title: 'Payment Verification Failed',
-                description: verifyData?.error || 'Please contact support if amount was debited.',
+                description: verificationResult.data?.error || 'Verification failed. Please contact support.',
                 variant: 'destructive',
               });
               return;
