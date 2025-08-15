@@ -181,9 +181,9 @@ const updateProductStock = async (supabase: any, order: any) => {
   for (const item of order.items) {
     try {
       // Decrease stock quantity
-      const { error: stockError } = await supabase.rpc('decrease_product_stock', {
-        product_id: item.productId,
-        quantity_to_decrease: item.quantity
+      const { data: success, error: stockError } = await supabase.rpc('decrease_product_stock', {
+        product_id_param: item.productId,
+        quantity_param: item.quantity
       })
 
       if (stockError) {

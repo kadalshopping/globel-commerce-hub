@@ -376,6 +376,10 @@ export type Database = {
         Args: { admin_notes_text?: string; product_id: string }
         Returns: boolean
       }
+      decrease_product_stock: {
+        Args: { product_id_param: string; quantity_param: number }
+        Returns: boolean
+      }
       get_product_image_url: {
         Args: { bucket_name: string; file_path: string }
         Returns: string

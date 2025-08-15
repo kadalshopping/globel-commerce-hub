@@ -21,6 +21,7 @@ interface RazorpayResponse {
 
 interface OrderData {
   id: string;
+  razorpay_order_id: string;
   amount: number;
   currency: string;
   razorpay_key_id: string;
@@ -134,26 +135,48 @@ export const PaymentButton = () => {
   const createRazorpayOrder = async (deliveryAddress: Address): Promise<OrderData> => {
     console.log('🚀 Creating Razorpay order...');
     
-    const orderResponse = await supabase.functions.invoke('create-razorpay-order', {
-      body: {
-        amount: Math.round(cart.total * 100),
-        currency: 'INR',
-        cart_items: cart.items,
-        delivery_address: deliveryAddress,
-      },
-    });
+    try {
+      const orderResponse = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount: Math.round(cart.total * 100),
+          currency: 'INR',
+          cart_items: cart.items,
+          delivery_address: deliveryAddress,
+        },
+      });
 
-    console.log('📦 Order response:', orderResponse);
+      console.log('📦 Order response:', orderResponse);
 
-    if (orderResponse.error) {
-      throw new Error(orderResponse.error.message || 'Failed to create payment order');
+      // Check for HTTP errors first
+      if (orderResponse.error) {
+        console.error('❌ HTTP Error:', orderResponse.error);
+        throw new Error(orderResponse.error.message || 'Failed to create payment order');
+      }
+
+      // Check response data structure
+      if (!orderResponse.data) {
+        console.error('❌ No data in response');
+        throw new Error('Invalid response from payment service');
+      }
+
+      // Check if response indicates success
+      if (!orderResponse.data.success) {
+        console.error('❌ Service returned error:', orderResponse.data);
+        throw new Error(orderResponse.data.error || 'Payment service error');
+      }
+
+      // Check if we have the required data
+      if (!orderResponse.data.data) {
+        console.error('❌ Missing order data');
+        throw new Error('Invalid order data received');
+      }
+
+      console.log('✅ Order created successfully:', orderResponse.data.data);
+      return orderResponse.data.data;
+    } catch (error) {
+      console.error('❌ Create order error:', error);
+      throw error;
     }
-
-    if (!orderResponse.data?.success || !orderResponse.data?.data) {
-      throw new Error('Invalid order response from server');
-    }
-
-    return orderResponse.data.data;
   };
 
   const verifyPayment = async (razorpayResponse: RazorpayResponse): Promise<boolean> => {
@@ -325,7 +348,7 @@ export const PaymentButton = () => {
         currency: orderData.currency,
         name: 'Your Store',
         description: `Order ${orderData.order_number}`,
-        order_id: orderData.id,
+        order_id: orderData.razorpay_order_id,
         handler: (response: RazorpayResponse) => {
           console.log('🔥 Razorpay handler called with response:', response);
           handlePaymentSuccess(response);
