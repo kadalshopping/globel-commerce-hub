@@ -159,13 +159,17 @@ export const PaymentButton = () => {
             }
 
             // Clear cart and show success message
+            const successElement = document.createElement('div');
+            successElement.setAttribute('data-payment-success', 'true');
+            document.body.appendChild(successElement);
+            
             clearCart();
             toast({
               title: 'Payment Successful',
               description: 'Your order has been placed successfully!',
             });
             
-            // Optionally redirect to orders page
+            // Redirect to orders page
             setTimeout(() => {
               window.location.href = '/orders';
             }, 2000);
@@ -187,22 +191,16 @@ export const PaymentButton = () => {
           color: 'hsl(var(--primary))',
         },
         modal: {
+          confirm_close: true, // Ask user before closing
           ondismiss: () => {
             console.log('Payment modal dismissed by user');
-            toast({
-              title: 'Payment Cancelled',
-              description: 'You can retry the payment anytime.',
-            });
-          },
-        },
-        error: {
-          handler: (error: any) => {
-            console.error('Razorpay payment error:', error);
-            toast({
-              title: 'Payment Failed',
-              description: error.description || 'Payment failed. Please try again.',
-              variant: 'destructive',
-            });
+            // Only show cancelled message if payment wasn't successful
+            if (!document.querySelector('[data-payment-success]')) {
+              toast({
+                title: 'Payment Cancelled',
+                description: 'You can retry the payment anytime.',
+              });
+            }
           },
         },
       };
