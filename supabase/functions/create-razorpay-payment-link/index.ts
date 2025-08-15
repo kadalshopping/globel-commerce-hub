@@ -193,6 +193,13 @@ serve(async (req) => {
 
     // Store pending order data in database for later creation
     const orderNumber = `ORD-${timestamp}`;
+    console.log('Creating pending order in database...', {
+      user_id: user.id,
+      total_amount: amount / 100,
+      order_number: orderNumber,
+      razorpay_order_id: razorpayOrder.id
+    });
+    
     const { data: pendingOrder, error: dbError } = await supabase
       .from('pending_orders')
       .insert({
@@ -201,8 +208,7 @@ serve(async (req) => {
         delivery_address: delivery_address,
         items: cart_items,
         order_number: orderNumber,
-        razorpay_order_id: razorpayOrder.id,
-        created_at: new Date().toISOString()
+        razorpay_order_id: razorpayOrder.id
       })
       .select()
       .single();
