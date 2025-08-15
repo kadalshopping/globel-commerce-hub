@@ -13,11 +13,27 @@ declare global {
   }
 }
 
+interface RazorpayResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface OrderData {
+  id: string;
+  amount: number;
+  currency: string;
+  razorpay_key_id: string;
+  order_id: string;
+  order_number: string;
+}
+
 export const PaymentButton = () => {
   const [loading, setLoading] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<(Address & { id?: string })[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<(Address & { id?: string }) | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'verifying' | 'success' | 'failed'>('idle');
   const { cart, clearCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -77,17 +93,16 @@ export const PaymentButton = () => {
           city: address.city,
           state: address.state,
           pincode: address.pincode,
-          is_default: savedAddresses.length === 0, // First address is default
+          is_default: savedAddresses.length === 0,
         });
 
       if (error) throw error;
       
-      // Reload addresses
       await loadSavedAddresses();
       
       toast({
         title: 'Address Saved',
-        description: 'Your delivery address has been saved for future orders.',
+        description: 'Your delivery address has been saved.',
       });
     } catch (error) {
       console.error('Error saving address:', error);
@@ -116,213 +131,83 @@ export const PaymentButton = () => {
     });
   };
 
-  const handleAddressSubmit = async (address: Address) => {
-    // Save the address to database
-    await saveAddress(address);
+  const createRazorpayOrder = async (deliveryAddress: Address): Promise<OrderData> => {
+    console.log('🚀 Creating Razorpay order...');
     
-    // Set as selected address
-    setSelectedAddress(address);
-    setShowAddressForm(false);
-    
-    // Continue with payment
-    await processPayment(address);
+    const orderResponse = await supabase.functions.invoke('create-razorpay-order', {
+      body: {
+        amount: Math.round(cart.total * 100),
+        currency: 'INR',
+        cart_items: cart.items,
+        delivery_address: deliveryAddress,
+      },
+    });
+
+    console.log('📦 Order response:', orderResponse);
+
+    if (orderResponse.error) {
+      throw new Error(orderResponse.error.message || 'Failed to create payment order');
+    }
+
+    if (!orderResponse.data?.success || !orderResponse.data?.data) {
+      throw new Error('Invalid order response from server');
+    }
+
+    return orderResponse.data.data;
   };
 
-  const processPayment = async (deliveryAddress?: Address) => {
-    if (!user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please log in to proceed with payment.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (cart.items.length === 0) {
-      toast({
-        title: 'Empty Cart',
-        description: 'Please add items to your cart before proceeding.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const finalAddress = deliveryAddress || selectedAddress;
-    if (!finalAddress) {
-      setShowAddressForm(true);
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      console.log('=== STARTING PAYMENT PROCESS ===');
-      console.log('Cart total:', cart.total);
-      console.log('Delivery address:', finalAddress);
-
-      // Load Razorpay script
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        throw new Error('Failed to load Razorpay payment gateway');
-      }
-
-      // Create order on backend
-      console.log('Creating Razorpay order...');
-      const orderResponse = await supabase.functions.invoke('create-razorpay-order', {
-        body: {
-          amount: Math.round(cart.total * 100), // Convert to paise
-          currency: 'INR',
-          cart_items: cart.items,
-          delivery_address: finalAddress,
-        },
-      });
-
-      console.log('Order creation response:', orderResponse);
-
-      if (orderResponse.error) {
-        throw new Error(orderResponse.error.message || 'Failed to create payment order');
-      }
-
-      if (!orderResponse.data?.success || !orderResponse.data?.data) {
-        throw new Error('No order data received from server');
-      }
-
-      const orderData = orderResponse.data.data; // Extract the nested data
-
-      console.log('Opening Razorpay checkout with data:', {
-        key: orderData.razorpay_key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        order_id: orderData.id,
-      });
-
-      // Configure Razorpay options
-      const options = {
-        key: orderData.razorpay_key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'Your Store',
-        description: `Order for ${cart.items.length} item(s)`,
-        order_id: orderData.id,
-        handler: async (response: any) => {
-          console.log('=== PAYMENT SUCCESSFUL ===');
-          console.log('Razorpay response:', response);
-          console.log('Handler called with response:', {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            hasSignature: !!response.razorpay_signature
-          });
-          
-          try {
-            await handlePaymentSuccess(response, orderData);
-            console.log('Payment success handler completed');
-          } catch (error) {
-            console.error('Error in payment success handler:', error);
-            toast({
-              title: 'Payment Verification Failed',
-              description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-              variant: 'destructive',
-            });
-            setLoading(false);
-          }
-        },
-        prefill: {
-          name: finalAddress.fullName,
-          email: user.email || '',
-          contact: finalAddress.phone,
-        },
-        theme: {
-          color: '#3B82F6',
-        },
-        modal: {
-          confirm_close: true,
-          ondismiss: () => {
-            console.log('Payment cancelled by user');
-            toast({
-              title: 'Payment Cancelled',
-              description: 'You can retry the payment anytime.',
-            });
-            setLoading(false);
-          },
-        },
-      };
-
-      console.log('About to open Razorpay with options:', {
-        key: options.key?.substring(0, 10) + '...',
-        amount: options.amount,
-        order_id: options.order_id
-      });
-
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
-
-    } catch (error) {
-      console.error('Payment initialization error:', error);
-      toast({
-        title: 'Payment Failed',
-        description: error instanceof Error ? error.message : 'Failed to initialize payment.',
-        variant: 'destructive',
-      });
-      setLoading(false);
-    }
-  };
-
-  const handlePaymentSuccess = async (razorpayResponse: any, orderData: any) => {
-    try {
-      console.log('=== VERIFYING PAYMENT ===');
-      console.log('Payment verification inputs:', {
+  const verifyPayment = async (razorpayResponse: RazorpayResponse): Promise<boolean> => {
+    console.log('🔍 Verifying payment...');
+    
+    const verificationResponse = await supabase.functions.invoke('verify-razorpay-payment', {
+      body: {
         razorpay_order_id: razorpayResponse.razorpay_order_id,
         razorpay_payment_id: razorpayResponse.razorpay_payment_id,
-        hasSignature: !!razorpayResponse.razorpay_signature,
-        orderData: orderData
-      });
+        razorpay_signature: razorpayResponse.razorpay_signature,
+      },
+    });
+
+    console.log('✅ Verification response:', verificationResponse);
+
+    if (verificationResponse.error) {
+      throw new Error(verificationResponse.error.message || 'Payment verification failed');
+    }
+
+    if (!verificationResponse.data?.success) {
+      throw new Error(verificationResponse.data?.error || 'Payment verification failed');
+    }
+
+    return true;
+  };
+
+  const handlePaymentSuccess = async (razorpayResponse: RazorpayResponse) => {
+    try {
+      setPaymentStatus('verifying');
       
-      // Show verification progress
       toast({
-        title: 'Payment Received',
-        description: 'Verifying payment and creating order...',
+        title: '💳 Payment Received!',
+        description: 'Verifying payment and confirming order...',
       });
 
-      // Verify payment with backend
-      console.log('Making verification request...');
-      const verificationResponse = await supabase.functions.invoke('verify-razorpay-payment', {
-        body: {
-          razorpay_order_id: razorpayResponse.razorpay_order_id,
-          razorpay_payment_id: razorpayResponse.razorpay_payment_id,
-          razorpay_signature: razorpayResponse.razorpay_signature,
-        },
+      await verifyPayment(razorpayResponse);
+      
+      setPaymentStatus('success');
+      
+      toast({
+        title: '🎉 Order Confirmed!',
+        description: 'Your payment has been processed successfully.',
       });
 
-      console.log('Verification response received:', verificationResponse);
-
-      if (verificationResponse.error) {
-        console.error('Verification error:', verificationResponse.error);
-        throw new Error(verificationResponse.error.message || 'Payment verification failed');
-      }
-
-      if (!verificationResponse.data?.success) {
-        console.error('Verification failed:', verificationResponse.data);
-        throw new Error(verificationResponse.data?.error || 'Payment verification failed');
-      }
-
-      console.log('=== PAYMENT VERIFIED SUCCESSFULLY ===');
-
-      // Clear cart
       clearCart();
-
-      // Show success message
-      toast({
-        title: 'Order Placed Successfully! 🎉',
-        description: 'Your payment has been processed and order has been created.',
-      });
-
-      // Redirect to orders page
+      
       setTimeout(() => {
         window.location.href = '/orders';
       }, 2000);
 
     } catch (error) {
-      console.error('Payment verification error:', error);
+      setPaymentStatus('failed');
+      console.error('❌ Payment verification failed:', error);
+      
       toast({
         title: 'Payment Verification Failed',
         description: `${error instanceof Error ? error.message : 'Unknown error'}. Please contact support if amount was debited.`,
@@ -333,11 +218,143 @@ export const PaymentButton = () => {
     }
   };
 
+  const handlePaymentError = (error: any) => {
+    setPaymentStatus('failed');
+    setLoading(false);
+    
+    console.error('❌ Razorpay payment error:', error);
+    
+    toast({
+      title: 'Payment Failed',
+      description: error.description || 'Payment failed. Please try again.',
+      variant: 'destructive',
+    });
+  };
+
+  const handlePaymentDismiss = () => {
+    setPaymentStatus('idle');
+    setLoading(false);
+    
+    toast({
+      title: 'Payment Cancelled',
+      description: 'You can retry the payment anytime.',
+    });
+  };
+
+  const initiatePayment = async (deliveryAddress: Address) => {
+    if (!user || cart.items.length === 0) {
+      toast({
+        title: 'Error',
+        description: 'Please ensure you are logged in and have items in cart.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+    setPaymentStatus('processing');
+
+    try {
+      console.log('🔄 Starting payment process...');
+
+      // Load Razorpay script
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error('Failed to load payment gateway');
+      }
+
+      // Create order
+      const orderData = await createRazorpayOrder(deliveryAddress);
+      
+      console.log('🎯 Opening Razorpay checkout...');
+
+      // Configure Razorpay
+      const options = {
+        key: orderData.razorpay_key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'Your Store',
+        description: `Order ${orderData.order_number}`,
+        order_id: orderData.id,
+        handler: handlePaymentSuccess,
+        prefill: {
+          name: deliveryAddress.fullName,
+          email: user.email || '',
+          contact: deliveryAddress.phone,
+        },
+        theme: {
+          color: '#3B82F6',
+        },
+        modal: {
+          confirm_close: true,
+          ondismiss: handlePaymentDismiss,
+        },
+        error: {
+          handler: handlePaymentError,
+        },
+        retry: {
+          enabled: true,
+          max_count: 3,
+        },
+        timeout: 300, // 5 minutes
+        remember_customer: true,
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+
+    } catch (error) {
+      setPaymentStatus('failed');
+      setLoading(false);
+      
+      console.error('❌ Payment initialization error:', error);
+      
+      toast({
+        title: 'Payment Failed',
+        description: error instanceof Error ? error.message : 'Failed to initialize payment.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAddressSubmit = async (address: Address) => {
+    await saveAddress(address);
+    setSelectedAddress(address);
+    setShowAddressForm(false);
+    await initiatePayment(address);
+  };
+
   const handlePayment = () => {
     if (selectedAddress) {
-      processPayment(selectedAddress);
+      initiatePayment(selectedAddress);
     } else {
       setShowAddressForm(true);
+    }
+  };
+
+  const getButtonText = () => {
+    switch (paymentStatus) {
+      case 'processing':
+        return 'Processing Payment...';
+      case 'verifying':
+        return 'Verifying Payment...';
+      case 'success':
+        return 'Payment Successful!';
+      case 'failed':
+        return 'Payment Failed - Retry?';
+      default:
+        return `Pay ₹${cart.total.toFixed(2)}`;
+    }
+  };
+
+  const getButtonVariant = () => {
+    switch (paymentStatus) {
+      case 'success':
+        return 'default';
+      case 'failed':
+        return 'destructive';
+      default:
+        return 'default';
     }
   };
 
@@ -359,10 +376,20 @@ export const PaymentButton = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowAddressForm(true)}
+                disabled={loading}
               >
                 Change
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* Payment Status */}
+        {paymentStatus !== 'idle' && (
+          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+              Status: {paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1)}
+            </p>
           </div>
         )}
 
@@ -372,8 +399,9 @@ export const PaymentButton = () => {
           disabled={loading || cart.items.length === 0}
           className="w-full"
           size="lg"
+          variant={getButtonVariant()}
         >
-          {loading ? 'Processing Payment...' : `Pay ₹${cart.total.toFixed(2)}`}
+          {getButtonText()}
         </Button>
       </div>
 
@@ -398,7 +426,7 @@ export const PaymentButton = () => {
                     onClick={() => {
                       setSelectedAddress(address);
                       setShowAddressForm(false);
-                      processPayment(address);
+                      initiatePayment(address);
                     }}
                   >
                     <p className="font-medium">{address.fullName}</p>
