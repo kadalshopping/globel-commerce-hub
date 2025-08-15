@@ -159,17 +159,28 @@ export const PaymentButton = () => {
   const verifyPayment = async (razorpayResponse: RazorpayResponse): Promise<boolean> => {
     console.log('🔍 Verifying payment...');
     
+    // Get the current session to include JWT token
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      throw new Error('Authentication token not found. Please login again.');
+    }
+    
     const verificationResponse = await supabase.functions.invoke('verify-razorpay-payment', {
       body: {
         razorpay_order_id: razorpayResponse.razorpay_order_id,
         razorpay_payment_id: razorpayResponse.razorpay_payment_id,
         razorpay_signature: razorpayResponse.razorpay_signature,
       },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
     });
 
     console.log('✅ Verification response:', verificationResponse);
 
     if (verificationResponse.error) {
+      console.error('❌ Verification error details:', verificationResponse.error);
       throw new Error(verificationResponse.error.message || 'Payment verification failed');
     }
 
