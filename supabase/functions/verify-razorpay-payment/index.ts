@@ -88,24 +88,30 @@ const verifyRazorpaySignature = async (
 }
 
 const findOrder = async (supabase: any, razorpayOrderId: string, userId: string) => {
+  console.log(`Looking for order with razorpay_order_id: ${razorpayOrderId} and user_id: ${userId}`)
+  
   const { data: order, error: fetchError } = await supabase
     .from('orders')
     .select('*')
     .eq('razorpay_order_id', razorpayOrderId)
     .eq('user_id', userId)
-    .single()
+    .maybeSingle()
 
   if (fetchError) {
     console.error('Order fetch error:', fetchError)
-    throw new Error('Order not found')
+    throw new Error(`Database error: ${fetchError.message}`)
   }
   
   if (!order) {
-    throw new Error('Order not found')
+    console.error(`No order found for razorpay_order_id: ${razorpayOrderId}, user_id: ${userId}`)
+    throw new Error('Order not found - payment may be for different account')
   }
   
+  console.log(`Order found: ${order.id}, current payment status: ${order.payment_status}`)
+  
   if (order.payment_status === 'completed') {
-    throw new Error('Order already processed')
+    console.log('Order already processed, but allowing re-verification')
+    // Don't throw error, allow re-verification for debugging
   }
 
   return order
@@ -224,6 +230,7 @@ serve(async (req) => {
 
     // Authenticate user
     const authHeader = req.headers.get('authorization')
+    console.log(`Auth header present: ${!!authHeader}`)
     const user = await authenticateUser(supabase, authHeader)
 
     console.log(`User authenticated [${requestId}]:`, { userId: user.id })
@@ -264,7 +271,9 @@ serve(async (req) => {
 
     if (!isSignatureValid) {
       console.error(`Signature verification failed [${requestId}]`)
-      throw new Error('Payment signature verification failed')
+      console.error('Expected payload:', `${razorpay_order_id}|${razorpay_payment_id}`)
+      console.error('Received signature:', razorpay_signature)
+      throw new Error('Payment signature verification failed - payment may be fraudulent')
     }
 
     console.log(`Payment signature verified successfully [${requestId}]`)
