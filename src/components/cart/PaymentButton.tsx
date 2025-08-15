@@ -193,6 +193,13 @@ export const PaymentButton = () => {
 
   const handlePaymentSuccess = async (razorpayResponse: RazorpayResponse) => {
     try {
+      console.log('✅ Razorpay payment success callback triggered!');
+      console.log('Payment response:', {
+        order_id: razorpayResponse.razorpay_order_id,
+        payment_id: razorpayResponse.razorpay_payment_id,
+        has_signature: !!razorpayResponse.razorpay_signature
+      });
+
       setPaymentStatus('verifying');
       
       toast({
@@ -200,9 +207,12 @@ export const PaymentButton = () => {
         description: 'Verifying payment and confirming order...',
       });
 
+      console.log('🔍 Starting payment verification...');
       await verifyPayment(razorpayResponse);
       
       setPaymentStatus('success');
+      
+      console.log('🎉 Payment verification completed successfully!');
       
       toast({
         title: '🎉 Order Confirmed!',
@@ -217,7 +227,12 @@ export const PaymentButton = () => {
 
     } catch (error) {
       setPaymentStatus('failed');
-      console.error('❌ Payment verification failed:', error);
+      console.error('❌ Payment verification failed in handlePaymentSuccess:', error);
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      });
       
       toast({
         title: 'Payment Verification Failed',
@@ -233,7 +248,15 @@ export const PaymentButton = () => {
     setPaymentStatus('failed');
     setLoading(false);
     
-    console.error('❌ Razorpay payment error:', error);
+    console.error('❌ Razorpay payment error callback triggered:', error);
+    console.error('Error details:', {
+      code: error.code,
+      description: error.description,
+      source: error.source,
+      step: error.step,
+      reason: error.reason,
+      metadata: error.metadata
+    });
     
     toast({
       title: 'Payment Failed',
@@ -280,6 +303,7 @@ export const PaymentButton = () => {
       console.log('🎯 Opening Razorpay checkout...');
 
       // Configure Razorpay
+      console.log('🎯 Configuring Razorpay with options...');
       const options = {
         key: orderData.razorpay_key_id,
         amount: orderData.amount,
@@ -287,7 +311,10 @@ export const PaymentButton = () => {
         name: 'Your Store',
         description: `Order ${orderData.order_number}`,
         order_id: orderData.id,
-        handler: handlePaymentSuccess,
+        handler: (response: RazorpayResponse) => {
+          console.log('🔥 Razorpay handler called with response:', response);
+          handlePaymentSuccess(response);
+        },
         prefill: {
           name: deliveryAddress.fullName,
           email: user.email || '',
@@ -298,10 +325,10 @@ export const PaymentButton = () => {
         },
         modal: {
           confirm_close: true,
-          ondismiss: handlePaymentDismiss,
-        },
-        error: {
-          handler: handlePaymentError,
+          ondismiss: () => {
+            console.log('👋 Razorpay modal dismissed by user');
+            handlePaymentDismiss();
+          },
         },
         retry: {
           enabled: true,
@@ -311,7 +338,14 @@ export const PaymentButton = () => {
         remember_customer: true,
       };
 
+      console.log('🚀 Opening Razorpay checkout modal...');
       const razorpay = new window.Razorpay(options);
+      
+      razorpay.on('payment.failed', (response: any) => {
+        console.log('💥 Razorpay payment.failed event:', response);
+        handlePaymentError(response.error);
+      });
+      
       razorpay.open();
 
     } catch (error) {
