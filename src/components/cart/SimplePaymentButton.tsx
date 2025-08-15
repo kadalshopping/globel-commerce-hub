@@ -79,6 +79,7 @@ const SimplePaymentButton = () => {
       });
 
       if (error || !orderData) {
+        console.error('❌ Order creation failed:', error);
         throw new Error('Failed to create payment order');
       }
 
@@ -92,18 +93,38 @@ const SimplePaymentButton = () => {
         description: `Payment for ${cart.itemCount} items`,
         order_id: orderData.razorpay_order_id,
         handler: function (response: any) {
-          console.log('✅ Payment successful:', response);
+          console.log('✅ Payment successful, verifying...', response);
           
-          toast({
-            title: '🎉 Payment Successful!',
-            description: `Payment completed successfully!`,
-          });
+          // Verify payment via edge function
+          supabase.functions.invoke('verify-razorpay-payment', {
+            body: {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            }
+          }).then(({ data: verificationResult, error: verifyError }) => {
+            if (verifyError || !verificationResult?.success) {
+              console.error('❌ Payment verification failed:', verifyError, verificationResult);
+              toast({
+                title: 'Payment Verification Failed',
+                description: 'Payment completed but verification failed. Please contact support.',
+                variant: 'destructive',
+              });
+              return;
+            }
 
-          clearCart();
-          
-          setTimeout(() => {
-            navigate('/orders');
-          }, 1500);
+            console.log('✅ Payment verified successfully:', verificationResult);
+            toast({
+              title: '🎉 Payment Successful!',
+              description: `Payment completed and verified successfully!`,
+            });
+
+            clearCart();
+            
+            setTimeout(() => {
+              navigate('/orders');
+            }, 1500);
+          });
         },
         prefill: {
           name: user.user_metadata?.full_name || 'Customer',
