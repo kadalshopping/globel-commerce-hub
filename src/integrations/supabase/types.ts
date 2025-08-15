@@ -208,6 +208,42 @@ export type Database = {
           },
         ]
       }
+      pending_orders: {
+        Row: {
+          created_at: string
+          delivery_address: Json
+          id: string
+          items: Json
+          order_number: string
+          razorpay_order_id: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_address: Json
+          id?: string
+          items: Json
+          order_number: string
+          razorpay_order_id: string
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_address?: Json
+          id?: string
+          items?: Json
+          order_number?: string
+          razorpay_order_id?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           admin_notes: string | null

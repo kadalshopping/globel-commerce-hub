@@ -94,9 +94,9 @@ export const PaymentButton = () => {
     });
   };
 
-  // Create Razorpay order
-  const createOrder = async (deliveryAddress: Address): Promise<OrderData> => {
-    console.log('🚀 Creating Razorpay order...');
+  // Create payment link
+  const createPaymentLink = async (deliveryAddress: Address): Promise<OrderData> => {
+    console.log('🚀 Creating payment link...');
     
     const orderData = {
       amount: cart.total * 100, // Convert to paise
@@ -105,46 +105,46 @@ export const PaymentButton = () => {
       delivery_address: deliveryAddress,
     };
 
-    console.log('📦 Order request data:', orderData);
+    console.log('📦 Payment link request data:', orderData);
 
     const { data: session } = await supabase.auth.getSession();
     if (!session?.session?.access_token) {
       throw new Error('Please log in to continue');
     }
 
-    const response = await supabase.functions.invoke('create-razorpay-order', {
+    const response = await supabase.functions.invoke('create-razorpay-payment-link', {
       body: orderData,
       headers: {
         Authorization: `Bearer ${session.session.access_token}`,
       },
     });
 
-    console.log('📦 Order response:', response);
+    console.log('📦 Payment link response:', response);
 
     if (response.error) {
-      console.error('❌ Order creation error:', response.error);
-      throw new Error(response.error.message || 'Failed to create order');
+      console.error('❌ Payment link creation error:', response.error);
+      throw new Error(response.error.message || 'Failed to create payment link');
     }
 
     if (!response.data?.success) {
-      console.error('❌ Order creation failed:', response.data);
-      throw new Error(response.data?.error || 'Failed to create order');
+      console.error('❌ Payment link creation failed:', response.data);
+      throw new Error(response.data?.error || 'Failed to create payment link');
     }
 
-    console.log('✅ Order created successfully:', response.data.data);
+    console.log('✅ Payment link created successfully:', response.data.data);
     return response.data.data;
   };
 
-  // Verify payment
-  const verifyPayment = async (razorpayResponse: RazorpayResponse): Promise<boolean> => {
-    console.log('🔍 Verifying payment...');
+  // Verify payment and create order
+  const verifyAndCreateOrder = async (razorpayResponse: RazorpayResponse): Promise<any> => {
+    console.log('🔍 Verifying payment and creating order...');
     
     const { data: session } = await supabase.auth.getSession();
     if (!session?.session?.access_token) {
       throw new Error('Authentication session expired');
     }
 
-    const response = await supabase.functions.invoke('verify-razorpay-payment', {
+    const response = await supabase.functions.invoke('verify-and-create-order', {
       body: {
         razorpay_order_id: razorpayResponse.razorpay_order_id,
         razorpay_payment_id: razorpayResponse.razorpay_payment_id,
@@ -155,19 +155,19 @@ export const PaymentButton = () => {
       },
     });
 
-    console.log('✅ Verification response:', response);
+    console.log('✅ Verification and order creation response:', response);
 
     if (response.error) {
-      console.error('❌ Verification error:', response.error);
-      throw new Error('Payment verification failed. Please contact support.');
+      console.error('❌ Verification and order creation error:', response.error);
+      throw new Error('Payment verification and order creation failed. Please contact support.');
     }
 
     if (!response.data?.success) {
-      console.error('❌ Verification failed:', response.data);
-      throw new Error(response.data?.error || 'Payment verification failed');
+      console.error('❌ Verification and order creation failed:', response.data);
+      throw new Error(response.data?.error || 'Payment verification and order creation failed');
     }
 
-    return true;
+    return response.data;
   };
 
   // Handle payment success
@@ -181,9 +181,9 @@ export const PaymentButton = () => {
         description: 'Verifying payment and confirming order...',
       });
 
-      console.log('🔍 Starting payment verification...');
-      const verificationResult = await verifyPayment(razorpayResponse);
-      console.log('✅ Payment verification result:', verificationResult);
+      console.log('🔍 Starting payment verification and order creation...');
+      const verificationResult = await verifyAndCreateOrder(razorpayResponse);
+      console.log('✅ Payment verified and order created:', verificationResult);
       
       setPaymentStatus('success');
       clearCart();
@@ -212,7 +212,7 @@ export const PaymentButton = () => {
       }
       
       toast({
-        title: '❌ Payment Verification Failed',
+        title: '❌ Payment Processing Failed',
         description: errorMessage,
         variant: 'destructive',
       });
@@ -246,8 +246,8 @@ export const PaymentButton = () => {
         throw new Error('Failed to load payment gateway. Please refresh and try again.');
       }
 
-      // Create order
-      const orderData = await createOrder(deliveryAddress);
+      // Create payment link
+      const orderData = await createPaymentLink(deliveryAddress);
 
       // Configure Razorpay options
       const options = {
