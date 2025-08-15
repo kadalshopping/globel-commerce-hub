@@ -14,14 +14,13 @@ interface CartItem {
   quantity: number;
   image?: string;
   maxStock: number;
-  shop_owner_id?: string;
 }
 
 interface OrderRequest {
   amount: number;
   currency: string;
   cart_items: CartItem[];
-  delivery_address?: any;
+  delivery_address: any;
 }
 
 serve(async (req) => {
@@ -40,7 +39,7 @@ serve(async (req) => {
   try {
     console.log('=== CREATE RAZORPAY ORDER START ===')
 
-    // Get user authentication first
+    // Initialize Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
@@ -50,6 +49,7 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Authenticate user
     const authHeader = req.headers.get('authorization')
     if (!authHeader) {
       throw new Error('Authorization required')
@@ -58,21 +58,24 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
     if (authError || !user) {
+      console.error('Authentication failed:', authError)
       throw new Error('Invalid authentication')
     }
 
-    // Parse request body
+    console.log('User authenticated:', { userId: user.id, email: user.email })
+
+    // Parse and validate request
     const requestBody: OrderRequest = await req.json()
     const { amount, currency, cart_items, delivery_address } = requestBody
 
-    console.log('Request validated:', {
-      userId: user.id,
+    console.log('Request details:', {
       amount,
       currency,
-      itemCount: cart_items?.length || 0
+      itemCount: cart_items?.length || 0,
+      hasDeliveryAddress: !!delivery_address
     })
 
-    // Validate request
+    // Validate input
     if (!amount || amount <= 0) {
       throw new Error('Valid amount is required')
     }
@@ -82,21 +85,46 @@ serve(async (req) => {
     if (!cart_items || !Array.isArray(cart_items) || cart_items.length === 0) {
       throw new Error('Cart items are required')
     }
+    if (!delivery_address) {
+      throw new Error('Delivery address is required')
+    }
 
     // Get Razorpay credentials
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID')
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
 
     if (!razorpayKeyId || !razorpayKeySecret) {
+      console.error('Razorpay credentials missing')
       throw new Error('Payment service not configured')
     }
+
+    console.log('Razorpay credentials verified')
+
+    // Enrich cart items with product data
+    const enrichedCartItems = await Promise.all(
+      cart_items.map(async (item) => {
+        const { data: product } = await supabase
+          .from('products')
+          .select('shop_owner_id, title, selling_price')
+          .eq('id', item.productId)
+          .single()
+
+        return {
+          ...item,
+          shop_owner_id: product?.shop_owner_id,
+          price: product?.selling_price || item.price
+        }
+      })
+    )
+
+    console.log('Cart items enriched with product data')
 
     // Generate unique receipt
     const receipt = `receipt_${Date.now()}_${user.id.substring(0, 8)}`
 
-    // Create Razorpay order (amount is already in paise from frontend)
+    // Create Razorpay order
     const orderData = {
-      amount: Math.round(amount), // Amount is already in paise
+      amount: Math.round(amount), // Amount already in paise from frontend
       currency: currency.toUpperCase(),
       receipt: receipt,
       notes: {
@@ -105,7 +133,11 @@ serve(async (req) => {
       }
     }
 
-    console.log('Creating Razorpay order:', orderData)
+    console.log('Creating Razorpay order:', {
+      amount: orderData.amount,
+      currency: orderData.currency,
+      receipt: orderData.receipt
+    })
 
     const authString = `${razorpayKeyId}:${razorpayKeySecret}`
     const authHeaderValue = `Basic ${btoa(authString)}`
@@ -121,7 +153,11 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Razorpay API error:', errorText)
+      console.error('Razorpay API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      })
       throw new Error('Failed to create payment order')
     }
 
@@ -132,24 +168,6 @@ serve(async (req) => {
       status: razorpayOrder.status
     })
 
-    // Prepare cart items with shop owner info
-    const enrichedCartItems = await Promise.all(
-      cart_items.map(async (item) => {
-        // Get product details including shop owner
-        const { data: product } = await supabase
-          .from('products')
-          .select('shop_owner_id, title, selling_price')
-          .eq('id', item.productId)
-          .single()
-
-        return {
-          ...item,
-          shop_owner_id: product?.shop_owner_id,
-          price: product?.selling_price || item.price
-        }
-      })
-    )
-
     // Create order in database
     const orderNumber = `ORD-${Date.now()}`
     const { data: dbOrder, error: dbError } = await supabase
@@ -159,7 +177,7 @@ serve(async (req) => {
         order_number: orderNumber,
         total_amount: amount / 100, // Convert paise back to rupees for database
         items: enrichedCartItems,
-        delivery_address: delivery_address || {},
+        delivery_address: delivery_address,
         razorpay_order_id: razorpayOrder.id,
         payment_status: 'pending',
         status: 'pending'
@@ -172,7 +190,10 @@ serve(async (req) => {
       throw new Error('Failed to create order record')
     }
 
-    console.log('Order created in database:', dbOrder.id)
+    console.log('Order created in database:', {
+      orderId: dbOrder.id,
+      orderNumber: orderNumber
+    })
 
     const responseData = {
       id: razorpayOrder.id,
@@ -192,7 +213,12 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('=== CREATE RAZORPAY ORDER ERROR ===', error)
+    console.error('=== CREATE RAZORPAY ORDER ERROR ===')
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    })
     
     return new Response(
       JSON.stringify({ 
