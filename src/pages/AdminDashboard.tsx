@@ -3,11 +3,14 @@ import { ProductApprovalCard } from '@/components/admin/ProductApprovalCard';
 import { AdminOrderManagement } from '@/components/orders/AdminOrderManagement';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, Clock, AlertTriangle, ShoppingBag } from 'lucide-react';
+import { Package, Clock, AlertTriangle, ShoppingBag, Database } from 'lucide-react';
+import { useMigrateCompletedOrders } from '@/hooks/useOrderMigration';
 
 const AdminDashboard = () => {
   const { data: pendingProducts = [], isLoading, error } = usePendingProducts();
+  const migrateOrders = useMigrateCompletedOrders();
 
   if (isLoading) {
     return (
@@ -36,7 +39,18 @@ const AdminDashboard = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <Button
+              onClick={() => migrateOrders.mutate()}
+              disabled={migrateOrders.isPending}
+              variant="outline"
+              size="sm"
+            >
+              <Database className="h-4 w-4 mr-2" />
+              {migrateOrders.isPending ? 'Migrating...' : 'Migrate Orders'}
+            </Button>
+          </div>
           <Badge variant="outline" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
             {pendingProducts.length} Pending Products
