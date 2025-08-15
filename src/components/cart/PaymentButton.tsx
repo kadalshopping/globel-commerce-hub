@@ -122,11 +122,19 @@ export const PaymentButton = () => {
         description: 'Product Purchase',
         order_id: orderData.id,
         handler: async (response: any) => {
+          console.log('=== PAYMENT SUCCESS HANDLER START ===');
+          console.log('Razorpay response received:', response);
+          console.log('Order data:', orderData);
+          
+          // Show immediate feedback
+          toast({
+            title: 'Payment Received',
+            description: 'Verifying payment...',
+          });
+
           try {
             // Verify payment on backend
-            console.log('=== PAYMENT SUCCESS HANDLER START ===');
-            console.log('Razorpay response:', response);
-            console.log('Order data:', orderData);
+            console.log('Starting payment verification...');
             
             const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
               body: {
@@ -140,12 +148,7 @@ export const PaymentButton = () => {
 
             if (verifyError) {
               console.error('Payment verification error details:', verifyError);
-              toast({
-                title: 'Payment Verification Failed',
-                description: `${verifyError.message || 'Please contact support if amount was debited.'}`,
-                variant: 'destructive',
-              });
-              return;
+              throw new Error(verifyError.message || 'Verification failed');
             }
 
             if (!verifyData?.success) {
@@ -173,12 +176,11 @@ export const PaymentButton = () => {
             setTimeout(() => {
               window.location.href = '/orders';
             }, 2000);
-            
           } catch (error) {
             console.error('Payment verification error:', error);
             toast({
               title: 'Payment Verification Failed',
-              description: 'Please contact support if amount was debited.',
+              description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}. Please contact support if amount was debited.`,
               variant: 'destructive',
             });
           }
