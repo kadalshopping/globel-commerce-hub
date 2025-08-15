@@ -1,377 +1,205 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Types
-interface PaymentVerificationRequest {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
-}
-
-interface OrderItem {
-  id: string;
-  productId: string;
-  title: string;
-  price: number;
-  quantity: number;
-  image?: string;
-  maxStock: number;
-}
-
-// Utility functions
-const validatePaymentData = (data: any): PaymentVerificationRequest => {
-  if (!data.razorpay_order_id || !data.razorpay_payment_id || !data.razorpay_signature) {
-    throw new Error('Missing required payment verification data');
-  }
-  
-  if (typeof data.razorpay_order_id !== 'string' || 
-      typeof data.razorpay_payment_id !== 'string' || 
-      typeof data.razorpay_signature !== 'string') {
-    throw new Error('Invalid payment verification data format');
-  }
-  
-  return data as PaymentVerificationRequest;
-};
-
-const authenticateUser = async (supabase: any, authHeader: string | null) => {
-  if (!authHeader) {
-    throw new Error('Authorization header missing');
-  }
-  
-  const token = authHeader.replace('Bearer ', '');
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  
-  if (error) {
-    console.error('Authentication error:', error);
-    throw new Error('Invalid authentication token');
-  }
-  
-  if (!user) {
-    throw new Error('User not found');
-  }
-  
-  return user;
-};
-
-const verifyRazorpaySignature = async (
-  orderId: string, 
-  paymentId: string, 
-  signature: string, 
-  secret: string
-): Promise<boolean> => {
-  try {
-    const payload = `${orderId}|${paymentId}`;
-    
-    console.log('Signature verification:', {
-      payload,
-      receivedSignature: signature,
-      secretLength: secret.length
-    });
-    
-    // Create HMAC SHA256 hash
-    const key = await crypto.subtle.importKey(
-      'raw',
-      new TextEncoder().encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-    
-    const signatureBuffer = await crypto.subtle.sign(
-      'HMAC',
-      key,
-      new TextEncoder().encode(payload)
-    );
-    
-    // Convert to hex string
-    const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
+// Verify Razorpay payment signature
+async function verifySignature(orderId: string, paymentId: string, signature: string, secret: string): Promise<boolean> {
+  const body = orderId + "|" + paymentId;
+  const expectedSignature = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  ).then(key => 
+    crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body))
+  ).then(signature => 
+    Array.from(new Uint8Array(signature))
       .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    console.log('Signature comparison:', {
-      expected: expectedSignature,
-      received: signature,
-      match: expectedSignature === signature
-    });
-
-    // Constant time comparison to prevent timing attacks
-    if (expectedSignature.length !== signature.length) {
-      return false;
-    }
-
-    let result = 0;
-    for (let i = 0; i < expectedSignature.length; i++) {
-      result |= expectedSignature.charCodeAt(i) ^ signature.charCodeAt(i);
-    }
-
-    const isValid = result === 0;
-    console.log('Final signature validation result:', isValid);
-    return isValid;
-    
-  } catch (error) {
-    console.error('Signature verification error:', error);
-    return false;
-  }
-};
-
-const findOrder = async (supabase: any, razorpayOrderId: string, userId: string) => {
-  const { data: order, error } = await supabase
-    .from('orders')
-    .select('*')
-    .eq('razorpay_order_id', razorpayOrderId)
-    .eq('user_id', userId)
-    .single();
-
-  if (error) {
-    console.error('Order lookup error:', error);
-    throw new Error('Order not found or access denied');
-  }
-
-  if (!order) {
-    throw new Error('Order not found');
-  }
-
-  if (order.payment_status === 'completed') {
-    console.log('Order already completed, skipping verification');
-    return order;
-  }
-
-  return order;
-};
-
-const updateOrderPayment = async (supabase: any, orderId: string, paymentId: string) => {
-  const { error } = await supabase
-    .from('orders')
-    .update({
-      razorpay_payment_id: paymentId,
-      payment_status: 'completed',
-      status: 'confirmed',
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', orderId);
-
-  if (error) {
-    console.error('Order update error:', error);
-    throw new Error('Failed to update order payment status');
-  }
-};
-
-const createOrderItems = async (supabase: any, order: any) => {
-  try {
-    const items = order.items as OrderItem[];
-    
-    for (const item of items) {
-      // Get product details including shop owner
-      const { data: product, error: productError } = await supabase
-        .from('products')
-        .select('shop_owner_id')
-        .eq('id', item.productId)
-        .single();
-
-      if (productError) {
-        console.error(`Failed to get product ${item.productId}:`, productError);
-        continue;
-      }
-
-      // Create order item
-      const { error: orderItemError } = await supabase
-        .from('order_items')
-        .insert({
-          order_id: order.id,
-          product_id: item.productId,
-          shop_owner_id: product.shop_owner_id,
-          quantity: item.quantity,
-          price: item.price,
-          status: 'pending'
-        });
-
-      if (orderItemError) {
-        console.error(`Failed to create order item for product ${item.productId}:`, orderItemError);
-      }
-    }
-  } catch (error) {
-    console.error('Error creating order items:', error);
-    throw new Error('Failed to create order items');
-  }
-};
-
-const updateProductStock = async (supabase: any, order: any) => {
-  try {
-    const items = order.items as OrderItem[];
-    
-    for (const item of items) {
-      const { data, error } = await supabase.rpc('decrease_product_stock', {
-        product_id_param: item.productId,
-        quantity_param: item.quantity
-      });
-
-      if (error) {
-        console.error(`Failed to update stock for product ${item.productId}:`, error);
-      } else if (!data) {
-        console.warn(`Insufficient stock or product not found: ${item.productId}`);
-      }
-    }
-  } catch (error) {
-    console.error('Error updating product stock:', error);
-    throw new Error('Failed to update product stock');
-  }
-};
+      .join('')
+  );
+  
+  return expectedSignature === signature;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'Method not allowed' 
-      }),
-      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
-  const requestId = crypto.randomUUID();
-
   try {
-    console.log(`=== VERIFY RAZORPAY PAYMENT START [${requestId}] ===`);
+    // Get environment variables
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET") || "test_secret_key";
 
-    // Initialize Supabase
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Supabase configuration missing');
+    if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
+      throw new Error("Missing Supabase configuration");
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Create Supabase clients
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabaseService = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Authenticate user
-    const authHeader = req.headers.get('authorization');
-    console.log(`Auth header present [${requestId}]: ${!!authHeader}`);
-    const user = await authenticateUser(supabase, authHeader);
-
-    console.log(`User authenticated [${requestId}]:`, { userId: user.id });
-
-    // Parse and validate request
-    let requestBody: PaymentVerificationRequest;
-    try {
-      requestBody = await req.json();
-    } catch (e) {
-      throw new Error('Invalid JSON in request body');
+    // Get user from auth header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      throw new Error("No authorization header");
     }
 
-    validatePaymentData(requestBody);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = requestBody;
-
-    console.log(`Payment verification request [${requestId}]:`, {
-      orderId: razorpay_order_id,
-      paymentId: razorpay_payment_id,
-      hasSignature: !!razorpay_signature
-    });
-
-    // Get Razorpay secret
-    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
-    if (!razorpayKeySecret) {
-      throw new Error('Payment verification service not configured');
+    if (authError || !user) {
+      throw new Error("Invalid user token");
     }
 
-    console.log(`Verifying payment signature [${requestId}]...`);
+    // Parse request body
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
 
-    // Verify signature
-    const isSignatureValid = await verifyRazorpaySignature(
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      throw new Error("Missing payment verification data");
+    }
+
+    console.log(`Verifying payment for user ${user.id}, order: ${razorpay_order_id}`);
+
+    // Verify payment signature
+    const isValidSignature = await verifySignature(
+      razorpay_order_id, 
+      razorpay_payment_id, 
+      razorpay_signature, 
       razorpayKeySecret
     );
 
-    if (!isSignatureValid) {
-      console.error(`Signature verification failed [${requestId}]`);
-      throw new Error('Payment signature verification failed - payment may be fraudulent');
+    if (!isValidSignature) {
+      throw new Error("Invalid payment signature");
     }
 
-    console.log(`Payment signature verified successfully [${requestId}]`);
+    console.log("Payment signature verified successfully");
 
-    // Find and validate order
-    const existingOrder = await findOrder(supabase, razorpay_order_id, user.id);
+    // Find the pending order
+    const { data: pendingOrder, error: fetchError } = await supabaseService
+      .from("pending_orders")
+      .select("*")
+      .eq("razorpay_order_id", razorpay_order_id)
+      .eq("user_id", user.id)
+      .single();
 
-    console.log(`Order found [${requestId}]:`, {
-      orderId: existingOrder.id,
-      orderNumber: existingOrder.order_number,
-      currentStatus: existingOrder.payment_status
-    });
-
-    // Skip if already processed
-    if (existingOrder.payment_status === 'completed') {
-      console.log(`Order already completed [${requestId}], returning success`);
-      return new Response(
-        JSON.stringify({ 
-          success: true,
-          message: 'Payment already verified and order confirmed',
-          data: {
-            order_id: existingOrder.id,
-            order_number: existingOrder.order_number,
-            payment_id: razorpay_payment_id,
-            status: 'confirmed'
-          }
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (fetchError || !pendingOrder) {
+      throw new Error("Pending order not found");
     }
 
-    // Update order with payment details
-    await updateOrderPayment(supabase, existingOrder.id, razorpay_payment_id);
-    console.log(`Order payment updated [${requestId}]`);
+    console.log(`Found pending order: ${pendingOrder.order_number}`);
+
+    // Create confirmed order
+    const { data: confirmedOrder, error: orderError } = await supabaseService
+      .from("orders")
+      .insert({
+        user_id: user.id,
+        order_number: pendingOrder.order_number,
+        total_amount: pendingOrder.total_amount,
+        status: "confirmed",
+        payment_status: "completed",
+        payment_id: null,
+        razorpay_order_id: razorpay_order_id,
+        razorpay_payment_id: razorpay_payment_id,
+        delivery_address: pendingOrder.delivery_address,
+        items: pendingOrder.items,
+      })
+      .select()
+      .single();
+
+    if (orderError) {
+      console.error("Order creation error:", orderError);
+      throw new Error("Failed to create confirmed order");
+    }
+
+    console.log(`Created confirmed order: ${confirmedOrder.id}`);
 
     // Create order items for shop owners
-    await createOrderItems(supabase, existingOrder);
-    console.log(`Order items created [${requestId}]`);
+    const items = pendingOrder.items as any[];
+    for (const item of items) {
+      // Get product details to find shop_owner_id
+      const { data: product } = await supabaseService
+        .from("products")
+        .select("shop_owner_id")
+        .eq("id", item.productId)
+        .single();
 
-    // Update product stock
-    await updateProductStock(supabase, existingOrder);
-    console.log(`Product stock updated [${requestId}]`);
+      if (product) {
+        // Create order item
+        const { error: itemError } = await supabaseService
+          .from("order_items")
+          .insert({
+            order_id: confirmedOrder.id,
+            product_id: item.productId,
+            shop_owner_id: product.shop_owner_id,
+            quantity: item.quantity,
+            price: item.price,
+            status: "pending",
+          });
 
-    console.log(`=== VERIFY RAZORPAY PAYMENT SUCCESS [${requestId}] ===`);
-
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        message: 'Payment verified and order confirmed',
-        data: {
-          order_id: existingOrder.id,
-          order_number: existingOrder.order_number,
-          payment_id: razorpay_payment_id,
-          status: 'confirmed'
+        if (itemError) {
+          console.error("Order item creation error:", itemError);
+        } else {
+          console.log(`Created order item for product ${item.productId}`);
         }
-      }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+
+        // Update product stock
+        const { error: stockError } = await supabaseService.rpc("decrease_product_stock", {
+          product_id_param: item.productId,
+          quantity_param: item.quantity,
+        });
+
+        if (stockError) {
+          console.error("Stock update error:", stockError);
+        } else {
+          console.log(`Updated stock for product ${item.productId}`);
+        }
+      }
+    }
+
+    // Delete pending order
+    const { error: deleteError } = await supabaseService
+      .from("pending_orders")
+      .delete()
+      .eq("id", pendingOrder.id);
+
+    if (deleteError) {
+      console.error("Pending order deletion error:", deleteError);
+    } else {
+      console.log(`Deleted pending order: ${pendingOrder.id}`);
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      order_id: confirmedOrder.id,
+      order_number: confirmedOrder.order_number,
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
 
   } catch (error) {
-    console.error(`=== VERIFY RAZORPAY PAYMENT ERROR [${requestId}] ===`);
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
+    console.error("Payment verification error:", error);
+    return new Response(JSON.stringify({ 
+      error: error.message || "Payment verification failed",
+      success: false 
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-    
-    return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: error instanceof Error ? error.message : 'Payment verification failed',
-        timestamp: new Date().toISOString(),
-        requestId: requestId
-      }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
   }
 });
