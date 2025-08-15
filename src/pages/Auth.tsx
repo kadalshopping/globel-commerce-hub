@@ -68,7 +68,7 @@ const Auth = () => {
       return;
     }
 
-    const { error } = await signUp(email, password, role, fullName);
+    const { error } = await signUp(email, password, { full_name: fullName, role });
 
     if (error) {
       setError(error.message);

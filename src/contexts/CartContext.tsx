@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, Cart } from '@/types/cart';
 import { useToast } from '@/hooks/use-toast';
 
@@ -8,166 +8,247 @@ interface CartContextType {
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
+  isInCart: (productId: string) => boolean;
+  getItemQuantity: (productId: string) => number;
 }
-
-type CartAction =
-  | { type: 'ADD_ITEM'; payload: Omit<CartItem, 'quantity'>; quantity?: number }
-  | { type: 'REMOVE_ITEM'; payload: string }
-  | { type: 'UPDATE_QUANTITY'; payload: { productId: string; quantity: number } }
-  | { type: 'CLEAR_CART' }
-  | { type: 'LOAD_CART'; payload: CartItem[] };
-
-const cartReducer = (state: Cart, action: CartAction): Cart => {
-  switch (action.type) {
-    case 'ADD_ITEM': {
-      const existingItem = state.items.find(item => item.productId === action.payload.productId);
-      const quantityToAdd = action.quantity || 1;
-      
-      if (existingItem) {
-        const newQuantity = Math.min(existingItem.quantity + quantityToAdd, existingItem.maxStock);
-        const updatedItems = state.items.map(item =>
-          item.productId === action.payload.productId
-            ? { ...item, quantity: newQuantity }
-            : item
-        );
-        
-        return {
-          items: updatedItems,
-          total: updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-          itemCount: updatedItems.reduce((sum, item) => sum + item.quantity, 0)
-        };
-      }
-      
-      const newItem: CartItem = { ...action.payload, quantity: quantityToAdd };
-      const newItems = [...state.items, newItem];
-      
-      return {
-        items: newItems,
-        total: newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        itemCount: newItems.reduce((sum, item) => sum + item.quantity, 0)
-      };
-    }
-    
-    case 'REMOVE_ITEM': {
-      const newItems = state.items.filter(item => item.productId !== action.payload);
-      return {
-        items: newItems,
-        total: newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        itemCount: newItems.reduce((sum, item) => sum + item.quantity, 0)
-      };
-    }
-    
-    case 'UPDATE_QUANTITY': {
-      const { productId, quantity } = action.payload;
-      
-      if (quantity <= 0) {
-        const newItems = state.items.filter(item => item.productId !== productId);
-        return {
-          items: newItems,
-          total: newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-          itemCount: newItems.reduce((sum, item) => sum + item.quantity, 0)
-        };
-      }
-      
-      const updatedItems = state.items.map(item =>
-        item.productId === productId
-          ? { ...item, quantity: Math.min(quantity, item.maxStock) }
-          : item
-      );
-      
-      return {
-        items: updatedItems,
-        total: updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        itemCount: updatedItems.reduce((sum, item) => sum + item.quantity, 0)
-      };
-    }
-    
-    case 'CLEAR_CART':
-      return { items: [], total: 0, itemCount: 0 };
-    
-    case 'LOAD_CART': {
-      const items = action.payload;
-      return {
-        items,
-        total: items.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        itemCount: items.reduce((sum, item) => sum + item.quantity, 0)
-      };
-    }
-    
-    default:
-      return state;
-  }
-};
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useCart must be used within a CartProvider');
   }
   return context;
 };
 
-export const CartProvider = ({ children }: { children: React.ReactNode }) => {
-  const [cart, dispatch] = useReducer(cartReducer, { items: [], total: 0, itemCount: 0 });
+interface CartProviderProps {
+  children: React.ReactNode;
+}
+
+const CART_STORAGE_KEY = 'shopping-cart';
+
+export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
+  const [cart, setCart] = useState<Cart>({
+    items: [],
+    total: 0,
+    itemCount: 0,
+  });
   const { toast } = useToast();
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
+    try {
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      if (savedCart) {
         const parsedCart = JSON.parse(savedCart);
-        dispatch({ type: 'LOAD_CART', payload: parsedCart });
-      } catch (error) {
-        console.error('Error loading cart from localStorage:', error);
+        setCart(parsedCart);
       }
+    } catch (error) {
+      console.error('Error loading cart from localStorage:', error);
+      // Clear invalid cart data
+      localStorage.removeItem(CART_STORAGE_KEY);
     }
   }, []);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart.items));
-  }, [cart.items]);
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    } catch (error) {
+      console.error('Error saving cart to localStorage:', error);
+    }
+  }, [cart]);
+
+  // Calculate cart totals
+  const calculateTotals = (items: CartItem[]): { total: number; itemCount: number } => {
+    const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const itemCount = items.reduce((count, item) => count + item.quantity, 0);
+    return { total, itemCount };
+  };
 
   const addToCart = (item: Omit<CartItem, 'quantity'>, quantity: number = 1) => {
-    dispatch({ type: 'ADD_ITEM', payload: item, quantity });
-    toast({
-      title: 'Added to Cart',
-      description: `${item.title} has been added to your cart.`,
-    });
+    try {
+      setCart(prevCart => {
+        const existingItemIndex = prevCart.items.findIndex(
+          cartItem => cartItem.productId === item.productId
+        );
+
+        let newItems: CartItem[];
+
+        if (existingItemIndex >= 0) {
+          // Item already in cart, update quantity
+          const existingItem = prevCart.items[existingItemIndex];
+          const newQuantity = existingItem.quantity + quantity;
+          
+          // Check stock limit
+          if (newQuantity > existingItem.maxStock) {
+            toast({
+              title: 'Stock Limit Reached',
+              description: `Only ${existingItem.maxStock} items available in stock.`,
+              variant: 'destructive',
+            });
+            return prevCart;
+          }
+
+          newItems = prevCart.items.map((cartItem, index) =>
+            index === existingItemIndex
+              ? { ...cartItem, quantity: newQuantity }
+              : cartItem
+          );
+        } else {
+          // New item, add to cart
+          if (quantity > item.maxStock) {
+            toast({
+              title: 'Stock Limit Exceeded',
+              description: `Only ${item.maxStock} items available in stock.`,
+              variant: 'destructive',
+            });
+            return prevCart;
+          }
+
+          const newItem: CartItem = {
+            ...item,
+            quantity,
+          };
+          newItems = [...prevCart.items, newItem];
+        }
+
+        const { total, itemCount } = calculateTotals(newItems);
+
+        toast({
+          title: 'Added to Cart',
+          description: `${item.title} has been added to your cart.`,
+        });
+
+        return {
+          items: newItems,
+          total,
+          itemCount,
+        };
+      });
+    } catch (error) {
+      console.error('Error adding item to cart:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add item to cart. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const removeFromCart = (productId: string) => {
-    dispatch({ type: 'REMOVE_ITEM', payload: productId });
-    toast({
-      title: 'Removed from Cart',
-      description: 'Item has been removed from your cart.',
-    });
+    try {
+      setCart(prevCart => {
+        const newItems = prevCart.items.filter(item => item.productId !== productId);
+        const { total, itemCount } = calculateTotals(newItems);
+
+        const removedItem = prevCart.items.find(item => item.productId === productId);
+        if (removedItem) {
+          toast({
+            title: 'Removed from Cart',
+            description: `${removedItem.title} has been removed from your cart.`,
+          });
+        }
+
+        return {
+          items: newItems,
+          total,
+          itemCount,
+        };
+      });
+    } catch (error) {
+      console.error('Error removing item from cart:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove item from cart. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
-    dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
+    try {
+      if (quantity < 1) {
+        removeFromCart(productId);
+        return;
+      }
+
+      setCart(prevCart => {
+        const newItems = prevCart.items.map(item => {
+          if (item.productId === productId) {
+            // Check stock limit
+            if (quantity > item.maxStock) {
+              toast({
+                title: 'Stock Limit Exceeded',
+                description: `Only ${item.maxStock} items available in stock.`,
+                variant: 'destructive',
+              });
+              return item;
+            }
+            return { ...item, quantity };
+          }
+          return item;
+        });
+
+        const { total, itemCount } = calculateTotals(newItems);
+
+        return {
+          items: newItems,
+          total,
+          itemCount,
+        };
+      });
+    } catch (error) {
+      console.error('Error updating cart quantity:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update quantity. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const clearCart = () => {
-    dispatch({ type: 'CLEAR_CART' });
-    toast({
-      title: 'Cart Cleared',
-      description: 'All items have been removed from your cart.',
-    });
+    try {
+      setCart({
+        items: [],
+        total: 0,
+        itemCount: 0,
+      });
+
+      toast({
+        title: 'Cart Cleared',
+        description: 'All items have been removed from your cart.',
+      });
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to clear cart. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  return (
-    <CartContext.Provider value={{
-      cart,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart
-    }}>
-      {children}
-    </CartContext.Provider>
-  );
+  const isInCart = (productId: string): boolean => {
+    return cart.items.some(item => item.productId === productId);
+  };
+
+  const getItemQuantity = (productId: string): number => {
+    const item = cart.items.find(item => item.productId === productId);
+    return item ? item.quantity : 0;
+  };
+
+  const value = {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    isInCart,
+    getItemQuantity,
+  };
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
