@@ -109,7 +109,7 @@ export const Header = () => {
                       Admin Dashboard
                     </DropdownMenuItem>
                   )}
-                  {isShopOwner && (
+                  {(isShopOwner || isAdmin) && (
                     <DropdownMenuItem onClick={() => navigate('/shop')}>
                       Shop Dashboard
                     </DropdownMenuItem>
