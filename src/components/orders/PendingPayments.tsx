@@ -38,7 +38,7 @@ export const PendingPayments = () => {
     setProcessingOrderId(pendingOrder.id);
 
     try {
-      console.log('🚀 Completing payment for pending order:', pendingOrder.order_number);
+      console.log('🚀 Starting Razorpay payment for order:', pendingOrder.order_number);
 
       // Load Razorpay script
       const scriptLoaded = await loadRazorpayScript();
@@ -46,73 +46,95 @@ export const PendingPayments = () => {
         throw new Error('Failed to load payment gateway');
       }
 
-      // Create confirmed order directly
-      const { data: confirmedOrder, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          user_id: user.id,
-          total_amount: pendingOrder.total_amount,
-          delivery_address: pendingOrder.delivery_address,
-          items: pendingOrder.items,
-          order_number: pendingOrder.order_number,
-          status: 'confirmed',
-          payment_status: 'completed',
-          razorpay_payment_id: `pay_completed_${Date.now()}`
-        })
-        .select()
-        .single();
-
-      if (orderError) {
-        throw new Error('Failed to create confirmed order');
-      }
-
-      // Create order items for shop owners
-      const items = pendingOrder.items;
-      for (const item of items) {
-        const { data: product } = await supabase
-          .from('products')
-          .select('shop_owner_id')
-          .eq('id', item.productId)
-          .maybeSingle();
-
-        if (product) {
-          await supabase
-            .from('order_items')
-            .insert({
-              order_id: confirmedOrder.id,
-              product_id: item.productId,
-              shop_owner_id: product.shop_owner_id,
-              quantity: item.quantity,
-              price: item.price,
-              status: 'pending'
-            });
-
-          // Update product stock
-          await supabase.rpc('decrease_product_stock', {
-            product_id_param: item.productId,
-            quantity_param: item.quantity
-          });
+      // Create Razorpay order using edge function
+      const { data: razorpayData, error: razorpayError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount: pendingOrder.total_amount,
+          cartItems: pendingOrder.items,
+          deliveryAddress: pendingOrder.delivery_address
         }
-      }
-
-      // Delete pending order
-      await supabase
-        .from('pending_orders')
-        .delete()
-        .eq('id', pendingOrder.id);
-
-      console.log('✅ Payment completed and order created');
-
-      toast({
-        title: '🎉 Payment Completed!',
-        description: `Order #${pendingOrder.order_number} has been confirmed`,
       });
 
-      // Refresh pending orders list
-      refetch();
+      if (razorpayError || !razorpayData) {
+        throw new Error('Failed to create Razorpay order');
+      }
+
+      console.log('✅ Razorpay order created:', razorpayData);
+
+      // Update pending order with Razorpay order ID
+      await supabase
+        .from('pending_orders')
+        .update({ razorpay_order_id: razorpayData.razorpay_order_id })
+        .eq('id', pendingOrder.id);
+
+      // Configure Razorpay options
+      const options = {
+        key: razorpayData.razorpay_key_id,
+        amount: razorpayData.amount,
+        currency: razorpayData.currency,
+        name: 'Your Store Name',
+        description: `Order #${pendingOrder.order_number}`,
+        order_id: razorpayData.razorpay_order_id,
+        handler: async (response: any) => {
+          try {
+            console.log('💳 Payment successful, verifying...', response);
+
+            // Verify payment using edge function
+            const { data: verificationData, error: verificationError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              }
+            });
+
+            if (verificationError || !verificationData) {
+              throw new Error('Payment verification failed');
+            }
+
+            console.log('✅ Payment verified and order created');
+            
+            toast({
+              title: '🎉 Payment Successful!',
+              description: `Order #${pendingOrder.order_number} has been confirmed`,
+            });
+
+            // Refresh the orders list
+            refetch();
+
+          } catch (error) {
+            console.error('❌ Payment verification error:', error);
+            toast({
+              title: 'Payment Verification Failed',
+              description: 'Payment was processed but verification failed. Please contact support.',
+              variant: 'destructive',
+            });
+          }
+        },
+        prefill: {
+          name: user.user_metadata?.full_name || 'Customer',
+          email: user.email,
+        },
+        theme: {
+          color: '#3b82f6'
+        },
+        modal: {
+          ondismiss: () => {
+            console.log('💸 Payment cancelled by user');
+            toast({
+              title: 'Payment Cancelled',
+              description: 'You can complete the payment anytime from your orders page.',
+            });
+          }
+        }
+      };
+
+      // Open Razorpay checkout
+      const rzp = new window.Razorpay(options);
+      rzp.open();
 
     } catch (error) {
-      console.error('❌ Payment completion error:', error);
+      console.error('❌ Payment initiation error:', error);
       toast({
         title: 'Payment Failed',
         description: error instanceof Error ? error.message : 'Something went wrong',
