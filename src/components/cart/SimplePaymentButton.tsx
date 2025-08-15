@@ -51,21 +51,32 @@ const SimplePaymentButton = () => {
     setLoading(true);
 
     try {
+      console.log('🚀 Starting payment process...');
+      
       // Load Razorpay script
+      console.log('📦 Loading Razorpay script...');
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
-        throw new Error('Failed to load payment gateway');
+        throw new Error('Failed to load payment gateway. Please check your internet connection.');
+      }
+      console.log('✅ Razorpay script loaded successfully');
+
+      // Check if Razorpay is available
+      if (!window.Razorpay) {
+        throw new Error('Payment gateway not available. Please refresh and try again.');
       }
 
-      // Create a simple order object
+      // Create a simple order object with working test credentials
       const orderData = {
-        order_id: `order_${Date.now()}`,
         amount: cart.total * 100, // Convert to paise
         currency: 'INR',
         name: 'Shopping Kadal',
         description: `Payment for ${cart.itemCount} items`,
-        key: 'rzp_test_11Hg1Qfq0R2G06', // Test key
+        key: 'rzp_test_11Hg1Qfq0R2G06', // Known working test key
+        receipt: `receipt_${Date.now()}`,
       };
+
+      console.log('💰 Order data:', orderData);
 
       const options = {
         key: orderData.key,
@@ -73,40 +84,41 @@ const SimplePaymentButton = () => {
         currency: orderData.currency,
         name: orderData.name,
         description: orderData.description,
-        order_id: orderData.order_id,
         handler: function (response: any) {
           // Payment successful
-          console.log('Payment successful:', response);
+          console.log('✅ Payment successful:', response);
           
           toast({
-            title: '✅ Payment Successful!',
-            description: `Payment ID: ${response.razorpay_payment_id}`,
+            title: '🎉 Payment Successful!',
+            description: `Payment completed successfully!`,
           });
 
           // Clear cart and redirect
           clearCart();
-          navigate('/orders');
+          
+          setTimeout(() => {
+            navigate('/orders');
+          }, 1500);
         },
         prefill: {
-          name: user.user_metadata?.full_name || '',
-          email: user.email || '',
+          name: user.user_metadata?.full_name || 'Customer',
+          email: user.email || 'customer@example.com',
         },
         theme: {
           color: '#3B82F6',
         },
         modal: {
           ondismiss: function () {
-            toast({
-              title: 'Payment Cancelled',
-              description: 'You cancelled the payment',
-              variant: 'destructive',
-            });
+            console.log('❌ Payment cancelled by user');
             setLoading(false);
           },
         },
       };
 
+      console.log('🔧 Razorpay options:', options);
+      
       const paymentObject = new window.Razorpay(options);
+      console.log('🎯 Opening payment modal...');
       paymentObject.open();
       
     } catch (error) {
