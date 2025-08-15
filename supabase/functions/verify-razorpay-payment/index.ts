@@ -11,6 +11,7 @@ interface PaymentVerificationRequest {
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
+  order_id?: string; // Our internal order ID
 }
 
 serve(async (req) => {
@@ -130,25 +131,71 @@ serve(async (req) => {
 
     console.log('User authenticated successfully:', { userId: user.id })
 
-    // Here you can add database operations to store payment details
-    // For example, create a payments table record:
-    /*
-    const { error: dbError } = await supabase
-      .from('payments')
-      .insert({
-        user_id: user.id,
-        razorpay_order_id,
-        razorpay_payment_id,
-        amount: order_amount, // You might need to pass this in the request
-        status: 'completed',
-        verified_at: new Date().toISOString()
-      })
-    
-    if (dbError) {
-      console.error('Failed to store payment record:', dbError)
-      throw new Error('Failed to record payment')
+    // Update the order with payment details
+    try {
+      console.log('Updating order with payment details...')
+      
+      // Find the order by razorpay_order_id
+      const { data: existingOrder, error: fetchError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('razorpay_order_id', razorpay_order_id)
+        .single()
+
+      if (fetchError || !existingOrder) {
+        console.error('Order not found:', fetchError)
+        throw new Error('Order not found in database')
+      }
+
+      // Update order with payment information
+      const { data: updatedOrder, error: updateError } = await supabase
+        .from('orders')
+        .update({
+          razorpay_payment_id: razorpay_payment_id,
+          payment_status: 'completed',
+          payment_id: razorpay_payment_id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingOrder.id)
+        .select()
+        .single()
+
+      if (updateError) {
+        console.error('Failed to update order:', updateError)
+        throw new Error('Failed to update order status')
+      }
+
+      console.log('Order updated successfully:', updatedOrder)
+
+      // Create order items for shop owners to track
+      if (existingOrder.items && Array.isArray(existingOrder.items)) {
+        console.log('Creating order items for shop tracking...')
+        
+        const orderItems = existingOrder.items.map((item: any) => ({
+          order_id: existingOrder.id,
+          product_id: item.productId || item.id,
+          shop_owner_id: item.shop_owner_id, // This should be included in cart items
+          quantity: item.quantity,
+          price: item.price,
+          status: 'pending'
+        }))
+
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems)
+
+        if (itemsError) {
+          console.error('Failed to create order items:', itemsError)
+          // Don't throw error here as payment is already verified
+        } else {
+          console.log('Order items created successfully')
+        }
+      }
+
+    } catch (dbError) {
+      console.error('Database operation failed:', dbError)
+      throw new Error('Failed to process order after payment verification')
     }
-    */
 
     console.log('Payment verification completed successfully:', {
       order_id: razorpay_order_id,

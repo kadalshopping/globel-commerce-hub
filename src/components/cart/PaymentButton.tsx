@@ -137,7 +137,22 @@ export const PaymentButton = () => {
 
             if (verifyError) {
               console.error('Payment verification error details:', verifyError);
-              throw new Error(`Payment verification failed: ${verifyError.message || 'Unknown error'}`);
+              toast({
+                title: 'Payment Verification Failed',
+                description: `${verifyError.message || 'Please contact support if amount was debited.'}`,
+                variant: 'destructive',
+              });
+              return;
+            }
+
+            if (!verifyData?.success) {
+              console.error('Payment verification failed:', verifyData);
+              toast({
+                title: 'Payment Verification Failed',
+                description: verifyData?.error || 'Please contact support if amount was debited.',
+                variant: 'destructive',
+              });
+              return;
             }
 
             // Clear cart and show success message
@@ -146,6 +161,12 @@ export const PaymentButton = () => {
               title: 'Payment Successful',
               description: 'Your order has been placed successfully!',
             });
+            
+            // Optionally redirect to orders page
+            setTimeout(() => {
+              window.location.href = '/orders';
+            }, 2000);
+            
           } catch (error) {
             console.error('Payment verification error:', error);
             toast({
@@ -164,9 +185,20 @@ export const PaymentButton = () => {
         },
         modal: {
           ondismiss: () => {
+            console.log('Payment modal dismissed by user');
             toast({
               title: 'Payment Cancelled',
               description: 'You can retry the payment anytime.',
+            });
+          },
+        },
+        error: {
+          handler: (error: any) => {
+            console.error('Razorpay payment error:', error);
+            toast({
+              title: 'Payment Failed',
+              description: error.description || 'Payment failed. Please try again.',
+              variant: 'destructive',
             });
           },
         },

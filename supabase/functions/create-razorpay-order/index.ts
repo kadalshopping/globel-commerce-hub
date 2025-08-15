@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,7 @@ interface OrderRequest {
   currency: string;
   receipt: string;
   cart_items: any[];
+  delivery_address?: any;
 }
 
 interface RazorpayOrderData {
@@ -58,7 +60,31 @@ serve(async (req) => {
       throw new Error('Invalid request body format')
     }
 
-    const { amount, currency, receipt, cart_items } = requestBody
+    const { amount, currency, receipt, cart_items, delivery_address } = requestBody
+
+    // Get user authentication
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Supabase configuration missing')
+      throw new Error('Database service not configured')
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Get and verify user from authorization header
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader) {
+      throw new Error('Authorization header missing')
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !user) {
+      console.error('User authentication failed:', authError)
+      throw new Error('User authentication failed')
+    }
 
     // Validate required fields
     if (!amount || amount <= 0) {
@@ -167,6 +193,39 @@ serve(async (req) => {
     }
 
     console.log('=== CREATE RAZORPAY ORDER SUCCESS ===')
+
+    // Store order in database
+    try {
+      console.log('Creating order record in database...')
+      
+      const orderData = {
+        user_id: user.id,
+        order_number: `ORD-${Date.now()}`,
+        total_amount: amount / 100, // Convert back to rupees
+        items: cart_items,
+        delivery_address: delivery_address || {},
+        razorpay_order_id: order.id,
+        payment_status: 'pending',
+        status: 'pending'
+      }
+
+      const { data: dbOrder, error: dbError } = await supabase
+        .from('orders')
+        .insert(orderData)
+        .select()
+        .single()
+
+      if (dbError) {
+        console.error('Failed to create order in database:', dbError)
+        // Don't throw error here, continue with Razorpay response
+        console.log('Continuing without DB order record...')
+      } else {
+        console.log('Order created in database:', dbOrder)
+      }
+    } catch (dbError) {
+      console.error('Database operation failed:', dbError)
+      // Continue with Razorpay order creation even if DB fails
+    }
     return new Response(
       JSON.stringify(responseData),
       {
