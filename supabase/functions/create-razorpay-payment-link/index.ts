@@ -66,6 +66,14 @@ serve(async (req) => {
     const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
 
+    // Log all environment variables for debugging
+    console.log('All environment variables:');
+    for (const [key, value] of Object.entries(Deno.env.toObject())) {
+      if (key.includes('RAZORPAY') || key.includes('SUPABASE')) {
+        console.log(`${key}: ${value ? 'SET' : 'NOT_SET'}`);
+      }
+    }
+
     console.log('Environment variables:', {
       supabaseUrl: !!supabaseUrl,
       supabaseServiceKey: !!supabaseServiceKey,
