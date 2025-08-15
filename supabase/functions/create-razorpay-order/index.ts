@@ -275,6 +275,7 @@ serve(async (req) => {
     }
 
     console.log(`Razorpay credentials verified [${requestId}]`)
+    console.log(`Using Razorpay Key ID: ${razorpayKeyId?.substring(0, 8)}...`)
 
     // Enrich cart items with product data and validate
     const enrichedCartItems = await enrichCartItems(supabase, cart_items)
