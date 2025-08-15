@@ -124,7 +124,10 @@ export const PaymentButton = () => {
         handler: async (response: any) => {
           try {
             // Verify payment on backend
-            console.log('Verifying payment:', response);
+            console.log('=== PAYMENT SUCCESS HANDLER START ===');
+            console.log('Razorpay response:', response);
+            console.log('Order data:', orderData);
+            
             const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
               body: {
                 razorpay_order_id: response.razorpay_order_id,

@@ -32,11 +32,14 @@ serve(async (req) => {
   try {
     console.log('=== VERIFY RAZORPAY PAYMENT START ===')
     console.log('Request method:', req.method)
+    console.log('Request headers available:', !!req.headers.get('authorization'))
 
     // Parse and validate request body
     let requestBody: PaymentVerificationRequest
     try {
-      requestBody = await req.json()
+      const rawBody = await req.text()
+      console.log('Raw request body length:', rawBody.length)
+      requestBody = JSON.parse(rawBody)
       console.log('Payment verification request:', {
         order_id: requestBody.razorpay_order_id,
         payment_id: requestBody.razorpay_payment_id,
