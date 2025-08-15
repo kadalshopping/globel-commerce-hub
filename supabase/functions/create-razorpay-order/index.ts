@@ -94,9 +94,9 @@ serve(async (req) => {
     // Generate unique receipt
     const receipt = `receipt_${Date.now()}_${user.id.substring(0, 8)}`
 
-    // Create Razorpay order
+    // Create Razorpay order (amount is already in paise from frontend)
     const orderData = {
-      amount: Math.round(amount * 100), // Convert to paise
+      amount: Math.round(amount), // Amount is already in paise
       currency: currency.toUpperCase(),
       receipt: receipt,
       notes: {
@@ -157,7 +157,7 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         order_number: orderNumber,
-        total_amount: amount,
+        total_amount: amount / 100, // Convert paise back to rupees for database
         items: enrichedCartItems,
         delivery_address: delivery_address || {},
         razorpay_order_id: razorpayOrder.id,
