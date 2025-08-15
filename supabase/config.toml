@@ -10,6 +10,12 @@ enable_signup = true
 double_confirm_changes = true
 enable_confirmations = false
 
+[functions.create-order]
+verify_jwt = true
+
+[functions.verify-payment]
+verify_jwt = true
+
 [functions.create-razorpay-payment-link]
 verify_jwt = true
 

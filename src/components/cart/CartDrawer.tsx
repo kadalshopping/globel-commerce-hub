@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
-import SimplePaymentButton from './SimplePaymentButton';
+import SecurePaymentButton from './SecurePaymentButton';
 
 export const CartDrawer = () => {
   const { cart, updateQuantity, removeFromCart } = useCart();
@@ -94,7 +94,7 @@ export const CartDrawer = () => {
               <div className="flex justify-between items-center mb-4">
                 <span className="text-lg font-semibold">Total: ₹{cart.total.toFixed(2)}</span>
               </div>
-              <SimplePaymentButton />
+              <SecurePaymentButton />
             </div>
           )}
         </div>
