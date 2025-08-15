@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductForm } from '@/components/shop/ProductForm';
 import { ProductEditDialog } from '@/components/product/ProductEditDialog';
+import { OrderManagement } from '@/components/orders/OrderManagement';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Package, CheckCircle, XCircle, Clock, Edit } from 'lucide-react';
+import { Plus, Package, CheckCircle, XCircle, Clock, Edit, ShoppingBag } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
@@ -189,6 +190,7 @@ const ShopOwnerDashboard = () => {
             <TabsTrigger value="pending">Pending ({pendingProducts.length})</TabsTrigger>
             <TabsTrigger value="approved">Approved ({approvedProducts.length})</TabsTrigger>
             <TabsTrigger value="rejected">Rejected ({rejectedProducts.length})</TabsTrigger>
+            <TabsTrigger value="orders">Orders</TabsTrigger>
           </TabsList>
           
           <TabsContent value="all" className="space-y-4">
@@ -240,6 +242,10 @@ const ShopOwnerDashboard = () => {
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
+          </TabsContent>
+          
+          <TabsContent value="orders" className="space-y-4">
+            <OrderManagement />
           </TabsContent>
         </Tabs>
       </div>
