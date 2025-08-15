@@ -173,7 +173,7 @@ export const PaymentButton = () => {
   // Handle payment success
   const handlePaymentSuccess = async (razorpayResponse: RazorpayResponse) => {
     try {
-      console.log('✅ Payment success callback triggered!');
+      console.log('✅ Payment success callback triggered with response:', razorpayResponse);
       setPaymentStatus('verifying');
       
       toast({
@@ -181,7 +181,9 @@ export const PaymentButton = () => {
         description: 'Verifying payment and confirming order...',
       });
 
-      await verifyPayment(razorpayResponse);
+      console.log('🔍 Starting payment verification...');
+      const verificationResult = await verifyPayment(razorpayResponse);
+      console.log('✅ Payment verification result:', verificationResult);
       
       setPaymentStatus('success');
       clearCart();
@@ -194,11 +196,24 @@ export const PaymentButton = () => {
       setTimeout(() => navigate('/orders'), 1500);
     } catch (error) {
       console.error('❌ Payment verification failed:', error);
+      console.error('❌ Full error object:', JSON.stringify(error, null, 2));
       setPaymentStatus('failed');
+      
+      // Show more specific error messages
+      let errorMessage = 'Payment verification failed. Please contact support if money was deducted.';
+      if (error instanceof Error) {
+        if (error.message.includes('signature verification failed')) {
+          errorMessage = 'Payment could not be verified. If money was deducted, it will be refunded within 7 days.';
+        } else if (error.message.includes('not configured')) {
+          errorMessage = 'Payment service configuration error. Please try again later.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
       
       toast({
         title: '❌ Payment Verification Failed',
-        description: error instanceof Error ? error.message : 'Payment verification failed',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
