@@ -1,11 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useUserOrders } from "@/hooks/useOrders";
-import { Package, Truck, CheckCircle, Clock } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import { Package, Truck, CheckCircle, Clock, ShoppingCart } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 export const UserOrderHistory = () => {
   const { data: orders, isLoading } = useUserOrders();
+  const { addToCart } = useCart();
+  const { toast } = useToast();
 
   if (isLoading) {
     return <div className="p-6">Loading your order history...</div>;
@@ -37,6 +42,25 @@ export const UserOrderHistory = () => {
     
     const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status, variant: 'secondary' as const };
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+  };
+
+  const handleReorder = (order: any) => {
+    if (order.items && order.items.length > 0) {
+      order.items.forEach((item: any) => {
+        addToCart({
+          id: item.id || `reorder-${Date.now()}-${Math.random()}`,
+          productId: item.id || `reorder-${Date.now()}-${Math.random()}`,
+          title: item.title,
+          price: item.price,
+          image: item.image || '/placeholder.svg',
+          maxStock: item.stock_quantity || 1,
+        }, item.quantity);
+      });
+      toast({
+        title: 'Items added to cart',
+        description: `${order.items.length} items from order #${order.order_number} added to cart`,
+      });
+    }
   };
 
   return (
@@ -113,6 +137,16 @@ export const UserOrderHistory = () => {
                   <div className="flex items-center justify-between">
                     <span className="font-medium">Total</span>
                     <span className="text-lg font-bold">₹{order.total_amount}</span>
+                  </div>
+                  <div className="mt-4">
+                    <Button 
+                      onClick={() => handleReorder(order)}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Reorder Items
+                    </Button>
                   </div>
                 </div>
               </CardContent>

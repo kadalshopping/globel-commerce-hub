@@ -3,6 +3,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { ProductForm } from '@/components/shop/ProductForm';
 import { ProductEditDialog } from '@/components/product/ProductEditDialog';
 import { OrderManagement } from '@/components/orders/OrderManagement';
+import { BankAccountManagement } from '@/components/shop/BankAccountManagement';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -191,6 +192,7 @@ const ShopOwnerDashboard = () => {
             <TabsTrigger value="approved">Approved ({approvedProducts.length})</TabsTrigger>
             <TabsTrigger value="rejected">Rejected ({rejectedProducts.length})</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="bank">Bank Details</TabsTrigger>
           </TabsList>
           
           <TabsContent value="all" className="space-y-4">
@@ -246,6 +248,10 @@ const ShopOwnerDashboard = () => {
           
           <TabsContent value="orders" className="space-y-4">
             <OrderManagement />
+          </TabsContent>
+          
+          <TabsContent value="bank" className="space-y-4">
+            <BankAccountManagement />
           </TabsContent>
         </Tabs>
       </div>

@@ -7,13 +7,55 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
+      delivery_addresses: {
+        Row: {
+          address: string
+          city: string
+          created_at: string
+          id: string
+          is_default: boolean | null
+          name: string
+          phone: string
+          pincode: string
+          state: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name: string
+          phone: string
+          pincode: string
+          state: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          phone?: string
+          pincode?: string
+          state?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -265,6 +307,45 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_bank_accounts: {
+        Row: {
+          account_holder_name: string
+          account_number: string
+          bank_name: string
+          branch_name: string | null
+          created_at: string
+          id: string
+          ifsc_code: string
+          is_verified: boolean | null
+          shop_owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          account_holder_name: string
+          account_number: string
+          bank_name: string
+          branch_name?: string | null
+          created_at?: string
+          id?: string
+          ifsc_code: string
+          is_verified?: boolean | null
+          shop_owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          account_holder_name?: string
+          account_number?: string
+          bank_name?: string
+          branch_name?: string | null
+          created_at?: string
+          id?: string
+          ifsc_code?: string
+          is_verified?: boolean | null
+          shop_owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -292,7 +373,7 @@ export type Database = {
     }
     Functions: {
       approve_product: {
-        Args: { product_id: string; admin_notes_text?: string }
+        Args: { admin_notes_text?: string; product_id: string }
         Returns: boolean
       }
       get_product_image_url: {
@@ -301,13 +382,13 @@ export type Database = {
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
       reject_product: {
-        Args: { product_id: string; admin_notes_text: string }
+        Args: { admin_notes_text: string; product_id: string }
         Returns: boolean
       }
     }
