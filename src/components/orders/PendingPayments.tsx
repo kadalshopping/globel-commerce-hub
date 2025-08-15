@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { usePendingOrders } from "@/hooks/usePendingOrders";
-import { CreditCard, Clock, AlertCircle } from "lucide-react";
+import { CreditCard, Clock, AlertCircle, Trash2, Minus, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -122,6 +123,52 @@ export const PendingPayments = () => {
     }
   };
 
+  const updateOrderItem = async (pendingOrder: any, itemIndex: number, newQuantity: number) => {
+    try {
+      const updatedItems = [...(pendingOrder.items as any[])];
+      if (newQuantity <= 0) {
+        updatedItems.splice(itemIndex, 1);
+      } else {
+        updatedItems[itemIndex] = { ...updatedItems[itemIndex], quantity: newQuantity };
+      }
+
+      if (updatedItems.length === 0) {
+        // If no items left, delete the entire order
+        await cancelPendingOrder(pendingOrder);
+        return;
+      }
+
+      // Recalculate total amount
+      const newTotal = updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+      await supabase
+        .from('pending_orders')
+        .update({
+          items: updatedItems,
+          total_amount: newTotal
+        })
+        .eq('id', pendingOrder.id);
+
+      toast({
+        title: 'Order Updated',
+        description: newQuantity <= 0 ? 'Item removed from order' : 'Item quantity updated',
+      });
+
+      refetch();
+    } catch (error) {
+      console.error('Error updating order item:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update order item',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const removeOrderItem = async (pendingOrder: any, itemIndex: number) => {
+    await updateOrderItem(pendingOrder, itemIndex, 0);
+  };
+
   const cancelPendingOrder = async (pendingOrder: any) => {
     try {
       await supabase
@@ -204,20 +251,58 @@ export const PendingPayments = () => {
                 <div className="mt-4">
                   <h4 className="font-medium mb-2">Items ({(pendingOrder.items as any[]).length})</h4>
                   <div className="space-y-2">
-                    {(pendingOrder.items as any[]).slice(0, 3).map((item: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-white rounded">
-                        <div>
+                    {(pendingOrder.items as any[]).map((item: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded border">
+                        <div className="flex-1">
                           <p className="font-medium text-sm">{item.title}</p>
-                          <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                          <p className="text-xs text-muted-foreground">₹{item.price} each</p>
                         </div>
-                        <p className="font-medium text-sm">₹{(item.price * item.quantity).toFixed(2)}</p>
+                        
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateOrderItem(pendingOrder, index, item.quantity - 1)}
+                              disabled={item.quantity <= 1}
+                            >
+                              <Minus className="w-3 h-3" />
+                            </Button>
+                            <Input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const newQty = parseInt(e.target.value) || 1;
+                                if (newQty !== item.quantity && newQty > 0) {
+                                  updateOrderItem(pendingOrder, index, newQty);
+                                }
+                              }}
+                              className="w-16 text-center"
+                              min="1"
+                            />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateOrderItem(pendingOrder, index, item.quantity + 1)}
+                            >
+                              <Plus className="w-3 h-3" />
+                            </Button>
+                          </div>
+                          
+                          <div className="text-right min-w-[60px]">
+                            <p className="font-medium text-sm">₹{(item.price * item.quantity).toFixed(2)}</p>
+                          </div>
+                          
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => removeOrderItem(pendingOrder, index)}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
-                    {(pendingOrder.items as any[]).length > 3 && (
-                      <p className="text-sm text-muted-foreground text-center">
-                        +{(pendingOrder.items as any[]).length - 3} more items
-                      </p>
-                    )}
                   </div>
                 </div>
               )}
@@ -225,7 +310,12 @@ export const PendingPayments = () => {
               <div className="mt-4 pt-4 border-t">
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-medium">Total Amount</span>
-                  <span className="text-lg font-bold text-orange-600">₹{pendingOrder.total_amount}</span>
+                  <span className="text-lg font-bold text-orange-600">
+                    ₹{pendingOrder.items && Array.isArray(pendingOrder.items) 
+                      ? (pendingOrder.items as any[]).reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)
+                      : pendingOrder.total_amount.toFixed(2)
+                    }
+                  </span>
                 </div>
                 <div className="flex gap-3">
                   <Button 
