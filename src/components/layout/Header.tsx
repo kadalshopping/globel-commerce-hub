@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin, useIsShopOwner } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,8 @@ import {
 
 export const Header = () => {
   const { user, signOut } = useAuth();
+  const isAdmin = useIsAdmin();
+  const isShopOwner = useIsShopOwner();
   const navigate = useNavigate();
 
   const handleAuthClick = () => {
@@ -98,12 +101,16 @@ export const Header = () => {
                   <DropdownMenuItem onClick={() => navigate('/orders')}>
                     My Orders
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/admin')}>
-                    Admin Dashboard
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/shop')}>
-                    Shop Dashboard
-                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => navigate('/admin')}>
+                      Admin Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  {isShopOwner && (
+                    <DropdownMenuItem onClick={() => navigate('/shop')}>
+                      Shop Dashboard
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Sign Out
