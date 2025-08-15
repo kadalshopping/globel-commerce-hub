@@ -215,14 +215,30 @@ export const PaymentButton = () => {
 
     console.log('✅ Verification response received:', verificationResponse);
 
+    // Check for function invocation errors (network, timeout, etc.)
     if (verificationResponse.error) {
-      console.error('❌ Verification error details:', verificationResponse.error);
-      throw new Error(verificationResponse.error.message || 'Payment verification failed');
+      console.error('❌ Function invocation error:', verificationResponse.error);
+      throw new Error('Payment verification service error. Please contact support.');
     }
 
-    if (!verificationResponse.data?.success) {
-      console.error('❌ Verification failed with data:', verificationResponse.data);
-      throw new Error(verificationResponse.data?.error || 'Payment verification failed');
+    // Check response structure
+    if (!verificationResponse.data) {
+      console.error('❌ No response data received');
+      throw new Error('Payment verification service returned no data');
+    }
+
+    // Check if verification was successful
+    if (!verificationResponse.data.success) {
+      console.error('❌ Verification failed:', verificationResponse.data);
+      
+      // More specific error messages
+      const errorMsg = verificationResponse.data.error || 'Payment verification failed';
+      
+      if (errorMsg.includes('signature verification failed')) {
+        throw new Error('Payment signature verification failed. This may be due to a network issue during payment. Your payment will be refunded within 7 business days if deducted.');
+      }
+      
+      throw new Error(errorMsg);
     }
 
     console.log('🎉 Payment verification successful!');

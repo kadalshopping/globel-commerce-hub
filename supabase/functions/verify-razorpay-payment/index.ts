@@ -63,24 +63,55 @@ const verifyRazorpaySignature = async (
   secret: string
 ): Promise<boolean> => {
   const payloadString = `${orderId}|${paymentId}`
-  const key = new TextEncoder().encode(secret)
-  const data = new TextEncoder().encode(payloadString)
+  
+  console.log('Signature verification details:', {
+    payload: payloadString,
+    receivedSignature: signature,
+    secretLength: secret.length
+  })
   
   try {
-    const cryptoKey = await crypto.subtle.importKey(
+    // Create HMAC SHA256 hash using Web Crypto API
+    const key = await crypto.subtle.importKey(
       'raw',
-      key,
+      new TextEncoder().encode(secret),
       { name: 'HMAC', hash: 'SHA-256' },
       false,
       ['sign']
     )
     
-    const computedSignature = await crypto.subtle.sign('HMAC', cryptoKey, data)
-    const expectedSignature = Array.from(new Uint8Array(computedSignature))
+    const signature_buffer = await crypto.subtle.sign(
+      'HMAC',
+      key,
+      new TextEncoder().encode(payloadString)
+    )
+    
+    // Convert to hex string
+    const expectedSignature = Array.from(new Uint8Array(signature_buffer))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('')
 
-    return expectedSignature === signature
+    console.log('Signature comparison:', {
+      expected: expectedSignature,
+      received: signature,
+      match: expectedSignature === signature
+    })
+
+    // Compare signatures using constant time comparison to prevent timing attacks
+    if (expectedSignature.length !== signature.length) {
+      console.log('Signature length mismatch')
+      return false
+    }
+
+    let result = 0
+    for (let i = 0; i < expectedSignature.length; i++) {
+      result |= expectedSignature.charCodeAt(i) ^ signature.charCodeAt(i)
+    }
+
+    const isValid = result === 0
+    console.log('Final signature validation result:', isValid)
+    return isValid
+    
   } catch (error) {
     console.error('Signature verification error:', error)
     return false
