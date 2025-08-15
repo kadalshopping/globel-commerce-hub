@@ -44,10 +44,14 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-    const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET") || "test_secret_key";
+    const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
 
     if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) {
       throw new Error("Missing Supabase configuration");
+    }
+
+    if (!razorpayKeySecret) {
+      throw new Error("Missing Razorpay secret key");
     }
 
     // Create Supabase clients

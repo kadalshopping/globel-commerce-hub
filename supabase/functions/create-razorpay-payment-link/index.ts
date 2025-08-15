@@ -27,17 +27,28 @@ serve(async (req) => {
     console.log('Getting environment variables...');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID');
+    const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET');
     
-    // Use hardcoded test credentials for now
-    const razorpayKeyId = 'rzp_test_11Hg1Qfq0R2G06';
-    const razorpayKeySecret = 'pKzBxQQnOOLwIDREBFK7H6iq';
-    
-    console.log('Using test Razorpay credentials');
+    console.log('Environment check:', {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseKey: !!supabaseServiceKey,
+      hasRazorpayId: !!razorpayKeyId,
+      hasRazorpaySecret: !!razorpayKeySecret
+    });
 
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('Supabase configuration missing');
       return new Response(
         JSON.stringify({ success: false, error: 'Database configuration missing' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!razorpayKeyId || !razorpayKeySecret) {
+      console.error('Razorpay credentials missing');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Payment service configuration missing' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
