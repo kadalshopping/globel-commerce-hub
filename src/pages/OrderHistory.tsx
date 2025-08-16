@@ -13,7 +13,6 @@ const OrderHistory = () => {
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-8">
           <PendingPayments />
-          <AddMoreProducts />
           <UserOrderHistory />
         </div>
         
