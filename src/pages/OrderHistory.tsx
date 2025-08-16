@@ -12,7 +12,6 @@ const OrderHistory = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-8">
-          <PaymentDebugTester />
           <PendingPayments />
           <AddMoreProducts />
           <UserOrderHistory />
