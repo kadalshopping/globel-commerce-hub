@@ -166,31 +166,31 @@ export const UserOrderHistory = () => {
                     <span className="text-lg font-bold">₹{order.total_amount}</span>
                   </div>
                   <div className="mt-4 space-y-2">
-                    {order.price_breakdown && (
+                    {(order as any).price_breakdown && (
                       <div className="bg-muted p-3 rounded-lg space-y-2">
                         <h5 className="font-medium text-sm">Price Breakdown:</h5>
                         <div className="space-y-1 text-xs">
                           <div className="flex justify-between">
                             <span>Subtotal:</span>
-                            <span>₹{order.price_breakdown.subtotal?.toFixed(2) || '0.00'}</span>
+                            <span>₹{(order as any).price_breakdown.subtotal?.toFixed(2) || '0.00'}</span>
                           </div>
-                          {order.price_breakdown.couponDiscount > 0 && (
+                          {(order as any).price_breakdown.couponDiscount > 0 && (
                             <div className="flex justify-between text-green-600">
                               <span>Coupon Discount:</span>
-                              <span>-₹{order.price_breakdown.couponDiscount.toFixed(2)}</span>
+                              <span>-₹{(order as any).price_breakdown.couponDiscount.toFixed(2)}</span>
                             </div>
                           )}
                           <div className="flex justify-between">
                             <span>Delivery:</span>
-                            <span>{order.price_breakdown.deliveryCharge === 0 ? 'FREE' : `₹${order.price_breakdown.deliveryCharge.toFixed(2)}`}</span>
+                            <span>{(order as any).price_breakdown.deliveryCharge === 0 ? 'FREE' : `₹${(order as any).price_breakdown.deliveryCharge.toFixed(2)}`}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Platform Charge (2%):</span>
-                            <span>₹{order.price_breakdown.platformCharge?.toFixed(2) || '0.00'}</span>
+                            <span>₹{(order as any).price_breakdown.platformCharge?.toFixed(2) || '0.00'}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>GST (18%):</span>
-                            <span>₹{order.price_breakdown.gst?.toFixed(2) || '0.00'}</span>
+                            <span>₹{(order as any).price_breakdown.gst?.toFixed(2) || '0.00'}</span>
                           </div>
                         </div>
                       </div>
