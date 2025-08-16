@@ -28,5 +28,8 @@ verify_jwt = true
 [functions.verify-razorpay-payment]
 verify_jwt = true
 
+[functions.create-pending-order]
+verify_jwt = true
+
 [functions.test-function]
 verify_jwt = false

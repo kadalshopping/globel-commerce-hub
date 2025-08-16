@@ -52,7 +52,7 @@ const SimplePaymentButton = () => {
     setLoading(true);
 
     try {
-      console.log('🚀 Starting payment with real Razorpay credentials...');
+      console.log('🚀 Starting payment process...');
       
       // Load Razorpay script
       const scriptLoaded = await loadRazorpayScript();
@@ -60,8 +60,10 @@ const SimplePaymentButton = () => {
         throw new Error('Failed to load payment gateway. Please refresh and try again.');
       }
 
-      // Create order via edge function (uses real keys)
-      const { data: orderData, error } = await supabase.functions.invoke('create-razorpay-order', {
+      console.log('📞 Creating pending order and Razorpay payment...');
+      
+      // Create pending order and Razorpay order in one call
+      const { data: orderData, error } = await supabase.functions.invoke('create-pending-order', {
         body: {
           amount: cart.total,
           cartItems: cart.items.map(item => ({
@@ -78,12 +80,19 @@ const SimplePaymentButton = () => {
         }
       });
 
-      if (error || !orderData) {
-        console.error('❌ Order creation failed:', error);
+      console.log('📦 Edge function response:', { orderData, error });
+
+      if (error) {
+        console.error('❌ Edge function error:', error);
+        throw new Error(`Payment setup failed: ${error.message || 'Unknown error'}`);
+      }
+
+      if (!orderData || !orderData.success) {
+        console.error('❌ No order data received or order creation failed');
         throw new Error('Failed to create payment order');
       }
 
-      console.log('✅ Order created with real keys:', orderData);
+      console.log('✅ Order created successfully:', orderData);
 
       const options = {
         key: orderData.razorpay_key_id, // Real key from backend
@@ -116,7 +125,7 @@ const SimplePaymentButton = () => {
             console.log('✅ Payment verified successfully:', verificationResult);
             toast({
               title: '🎉 Payment Successful!',
-              description: `Payment completed and verified successfully!`,
+              description: `Order confirmed! Order number: ${verificationResult.order_number}`,
             });
 
             clearCart();
