@@ -12,6 +12,7 @@ import ShopOwnerDashboard from "./pages/ShopOwnerDashboard";
 import OrderHistory from "./pages/OrderHistory";
 import UserProfile from "./pages/UserProfile";
 import Auth from "./pages/Auth";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/shop" element={<ShopOwnerDashboard />} />
               <Route path="/orders" element={<OrderHistory />} />
               <Route path="/profile" element={<UserProfile />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

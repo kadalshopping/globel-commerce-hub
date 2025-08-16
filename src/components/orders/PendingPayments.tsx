@@ -9,8 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { ManualPaymentVerification } from "./ManualPaymentVerification";
-import { PaymentDebugInfo } from "./PaymentDebugInfo";
+import { PaymentDebugInfo } from './PaymentDebugInfo';
+import { ManualPaymentVerification } from './ManualPaymentVerification';
+import PaymentLinkVerification from './PaymentLinkVerification';
 
 declare global {
   interface Window {
@@ -414,6 +415,13 @@ export const PendingPayments = () => {
                 </div>
                 
                 <PaymentDebugInfo pendingOrder={pendingOrder} />
+                
+                <PaymentLinkVerification
+                  pendingOrder={pendingOrder}
+                  onSuccess={() => {
+                    refetch();
+                  }}
+                />
                 
                 {showManualVerification === pendingOrder.id && (
                   <ManualPaymentVerification
