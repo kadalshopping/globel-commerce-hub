@@ -70,12 +70,13 @@ serve(async (req) => {
     console.log(`👤 Authenticated user: ${user.id}`);
 
     // Parse request body
-    const { amount, cartItems, deliveryAddress } = await req.json();
+    const { amount, cartItems, deliveryAddress, priceBreakdown } = await req.json();
     
     console.log("📊 Request data:", {
       amount,
       itemCount: cartItems?.length,
-      hasAddress: !!deliveryAddress
+      hasAddress: !!deliveryAddress,
+      hasPriceBreakdown: !!priceBreakdown
     });
 
     if (!amount || !cartItems || cartItems.length === 0) {

@@ -74,29 +74,68 @@ const SimpleOrderButton: React.FC<SimpleOrderButtonProps> = ({ priceBreakdown })
     setLoading(true);
 
     try {
-      console.log('🚀 Creating order...');
+      console.log('🚀 Creating Razorpay payment link...');
       
-      // Create order directly
-      const order = await createOrder();
-      console.log('✅ Order created:', order.order_number);
-
-      // Show success message
-      toast({
-        title: '🛒 Order Created Successfully!',
-        description: `Order #${order.order_number} has been placed.`,
+      // Create payment link via edge function
+      const { data: paymentLinkData, error } = await supabase.functions.invoke('create-payment-link', {
+        body: {
+          amount: finalTotal,
+          cartItems: cart.items.map(item => ({
+            id: item.id,
+            productId: item.id.replace('cart_', ''),
+            title: item.title,
+            price: item.price,
+            image: item.image,
+            maxStock: item.maxStock,
+            quantity: item.quantity
+          })),
+          deliveryAddress: {
+            fullName: user.user_metadata?.full_name || 'Customer',
+            email: user.email || 'customer@example.com'
+          },
+          priceBreakdown: priceBreakdown
+        }
       });
 
+      console.log('📦 Payment link response:', { paymentLinkData, error });
+
+      if (error) {
+        console.error('❌ Payment link creation failed:', error);
+        throw new Error(`Failed to create payment link: ${error.message || 'Unknown error'}`);
+      }
+
+      if (!paymentLinkData || !paymentLinkData.success) {
+        console.error('❌ Invalid payment link response:', paymentLinkData);
+        throw new Error('Failed to create payment link - invalid response');
+      }
+
+      console.log('✅ Payment link created successfully:', paymentLinkData);
+
+      // Show success message and open payment link
+      toast({
+        title: '🔗 Payment Link Created!',
+        description: 'Opening payment page in new tab...',
+      });
+
+      // Open payment link in new tab
+      window.open(paymentLinkData.payment_link_url, '_blank');
+
+      // Clear cart and navigate to payment success tracking
       clearCart();
       
       setTimeout(() => {
         navigate('/orders');
-      }, 1500);
-      
+        toast({
+          title: '📱 Complete Payment',
+          description: 'Please complete payment in the opened tab, then refresh this page to see your order.',
+        });
+      }, 1000);
+
     } catch (error) {
-      console.error('❌ Order creation error:', error);
+      console.error('❌ Payment link error:', error);
       toast({
-        title: 'Order Failed',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: 'Payment Link Error', 
+        description: error instanceof Error ? error.message : 'Failed to create payment link',
         variant: 'destructive',
       });
     } finally {
@@ -116,11 +155,11 @@ const SimpleOrderButton: React.FC<SimpleOrderButtonProps> = ({ priceBreakdown })
       size="lg"
     >
       {loading ? (
-        'Creating Order...'
+        'Creating Payment Link...'
       ) : (
         <div className="flex items-center gap-2">
           <ShoppingBag className="w-4 h-4" />
-          Place Order ₹{finalTotal.toFixed(2)}
+          Checkout - Pay ₹{finalTotal.toFixed(2)}
         </div>
       )}
     </Button>
