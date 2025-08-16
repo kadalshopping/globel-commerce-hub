@@ -6,13 +6,19 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ShoppingBag } from 'lucide-react';
+import { PriceBreakdown as PriceBreakdownType } from '@/utils/priceCalculations';
 
-const SimpleOrderButton = () => {
+interface SimpleOrderButtonProps {
+  priceBreakdown: PriceBreakdownType | null;
+}
+
+const SimpleOrderButton: React.FC<SimpleOrderButtonProps> = ({ priceBreakdown }) => {
   const [loading, setLoading] = useState(false);
   const { cart, clearCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const finalTotal = priceBreakdown?.total || cart.total;
 
   const createOrder = async () => {
     const timestamp = Date.now();
@@ -23,7 +29,8 @@ const SimpleOrderButton = () => {
       .from('orders')
       .insert({
         user_id: user?.id || '',
-        total_amount: cart.total,
+        total_amount: finalTotal,
+        price_breakdown: priceBreakdown as any,
         delivery_address: {
           fullName: user?.user_metadata?.full_name || 'Customer',
           email: user?.email || 'customer@example.com'
@@ -113,7 +120,7 @@ const SimpleOrderButton = () => {
       ) : (
         <div className="flex items-center gap-2">
           <ShoppingBag className="w-4 h-4" />
-          Place Order ₹{cart.total.toFixed(2)}
+          Place Order ₹{finalTotal.toFixed(2)}
         </div>
       )}
     </Button>

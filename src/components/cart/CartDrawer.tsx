@@ -4,9 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import SimpleOrderButton from './SimpleOrderButton';
+import { PriceBreakdown } from './PriceBreakdown';
+import { PriceBreakdown as PriceBreakdownType } from '@/utils/priceCalculations';
+import { useState } from 'react';
 
 export const CartDrawer = () => {
   const { cart, updateQuantity, removeFromCart } = useCart();
+  const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdownType | null>(null);
 
   return (
     <Sheet>
@@ -90,11 +94,12 @@ export const CartDrawer = () => {
           </div>
           
           {cart.items.length > 0 && (
-            <div className="border-t pt-4 mt-4">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-lg font-semibold">Total: ₹{cart.total.toFixed(2)}</span>
-              </div>
-              <SimpleOrderButton />
+            <div className="border-t pt-4 mt-4 space-y-4">
+              <PriceBreakdown 
+                cartTotal={cart.total} 
+                onTotalChange={setPriceBreakdown}
+              />
+              <SimpleOrderButton priceBreakdown={priceBreakdown} />
             </div>
           )}
         </div>
