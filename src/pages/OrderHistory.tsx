@@ -2,7 +2,7 @@ import { UserOrderHistory } from "@/components/orders/UserOrderHistory";
 import { PendingPayments } from "@/components/orders/PendingPayments";
 import { AddMoreProducts } from "@/components/orders/AddMoreProducts";
 import { ContinueCheckout } from "@/components/orders/ContinueCheckout";
-import { PaymentDebugTester } from "@/components/orders/PaymentDebugTester";
+
 
 const OrderHistory = () => {
   return (
