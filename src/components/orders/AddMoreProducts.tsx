@@ -7,9 +7,10 @@ import { ProductCard } from '@/components/product/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingCart, Search, Plus, Filter } from 'lucide-react';
+import { ShoppingCart, Search, Plus, Filter, ArrowRight, CreditCard } from 'lucide-react';
 import { PriceBreakdown } from '@/components/cart/PriceBreakdown';
 import { PriceBreakdown as PriceBreakdownType } from '@/utils/priceCalculations';
+import SimpleOrderButton from '@/components/cart/SimpleOrderButton';
 
 export const AddMoreProducts = () => {
   const { data: approvedProducts = [], isLoading } = useProducts();
@@ -61,6 +62,69 @@ export const AddMoreProducts = () => {
 
   return (
     <div className="space-y-6">
+      {/* Checkout Section - Shows when cart has items */}
+      {cart.itemCount > 0 && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-primary" />
+                <span>Ready to Checkout</span>
+                <Badge variant="default" className="ml-2">
+                  {cart.itemCount} items
+                </Badge>
+              </div>
+              <Badge variant="outline" className="text-lg font-bold">
+                ₹{priceBreakdown?.total?.toFixed(2) || cart.total.toFixed(2)}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Cart Items Summary */}
+              <div>
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4" />
+                  Items in Your Cart
+                </h4>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {cart.items.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                      </div>
+                      <p className="font-medium">₹{(item.price * item.quantity).toFixed(2)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price Breakdown */}
+              <div>
+                <PriceBreakdown 
+                  cartTotal={cart.total} 
+                  onTotalChange={setPriceBreakdown}
+                />
+              </div>
+            </div>
+
+            {/* Checkout Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+              <SimpleOrderButton priceBreakdown={priceBreakdown} />
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2"
+                onClick={() => setShowPriceBreakdown(!showPriceBreakdown)}
+              >
+                <CreditCard className="w-4 h-4" />
+                {showPriceBreakdown ? 'Hide Details' : 'View Details'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -74,13 +138,18 @@ export const AddMoreProducts = () => {
                 {cart.itemCount} items
               </Badge>
               {cart.itemCount > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowPriceBreakdown(!showPriceBreakdown)}
-                >
-                  {showPriceBreakdown ? 'Hide' : 'Show'} Total
-                </Button>
+                <>
+                  <Badge variant="default" className="bg-primary">
+                    Total: ₹{priceBreakdown?.total?.toFixed(2) || cart.total.toFixed(2)}
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPriceBreakdown(!showPriceBreakdown)}
+                  >
+                    {showPriceBreakdown ? 'Hide' : 'Show'} Details
+                  </Button>
+                </>
               )}
             </div>
           </div>
