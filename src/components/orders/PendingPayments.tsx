@@ -3,89 +3,71 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePendingOrders } from "@/hooks/usePendingOrders";
-import { CreditCard, Clock, AlertCircle, Trash2, Minus, Plus, CheckCircle } from "lucide-react";
+import { ShoppingBag, Clock, AlertCircle, Trash2, Minus, Plus, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { PaymentDebugInfo } from './PaymentDebugInfo';
-import { ManualPaymentVerification } from './ManualPaymentVerification';
-import PaymentLinkVerification from './PaymentLinkVerification';
-
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
 
 export const PendingPayments = () => {
   const { data: pendingOrders, isLoading, refetch } = usePendingOrders();
   const { toast } = useToast();
   const { user } = useAuth();
   const [processingOrderId, setProcessingOrderId] = useState<string | null>(null);
-  const [showManualVerification, setShowManualVerification] = useState<string | null>(null);
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
-
-  const completePayment = async (pendingOrder: any) => {
+  const completeOrder = async (pendingOrder: any) => {
     if (!user) return;
     
     setProcessingOrderId(pendingOrder.id);
 
     try {
-      console.log('🚀 Starting payment with real Razorpay credentials for order:', pendingOrder.order_number);
+      console.log('🚀 Converting pending order to completed order:', pendingOrder.order_number);
 
-      // Load Razorpay script
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        throw new Error('Failed to load payment gateway');
+      // Create completed order directly
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: pendingOrder.user_id,
+          total_amount: pendingOrder.total_amount,
+          delivery_address: pendingOrder.delivery_address,
+          items: pendingOrder.items,
+          order_number: pendingOrder.order_number,
+          payment_status: 'completed',
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error('Order creation error:', orderError);
+        throw new Error('Failed to create order');
       }
 
-      // Create payment link with real Razorpay credentials from Supabase
-      console.log('🔗 Creating payment link with real Razorpay credentials...');
-      
-      const { data: paymentLinkData, error: linkError } = await supabase.functions.invoke('create-payment-link', {
-        body: {
-          amount: pendingOrder.total_amount,
-          cartItems: pendingOrder.items,
-          deliveryAddress: pendingOrder.delivery_address
-        }
-      });
+      // Delete pending order
+      const { error: deleteError } = await supabase
+        .from('pending_orders')
+        .delete()
+        .eq('id', pendingOrder.id);
 
-      if (linkError || !paymentLinkData?.success) {
-        console.error('❌ Payment link creation failed:', linkError);
-        throw new Error(`Failed to create payment link: ${linkError?.message || 'Unknown error'}`);
+      if (deleteError) {
+        console.error('Failed to delete pending order:', deleteError);
       }
 
-      console.log('✅ Payment link created with real Razorpay credentials:', paymentLinkData);
+      console.log('✅ Order completed successfully:', order.order_number);
 
-      // Open payment link in new tab
-      window.open(paymentLinkData.payment_link_url, '_blank');
-      
       toast({
-        title: '🔗 Payment Link Created!',
-        description: 'Complete payment in the opened tab to confirm your order.',
+        title: '🎉 Order Completed!',
+        description: `Order #${order.order_number} has been placed successfully.`,
       });
 
-      // Refresh orders after a delay
-      setTimeout(() => {
-        refetch();
-      }, 2000);
-
-    } catch (error: any) {
-      console.error('❌ Payment error:', error);
+      refetch();
+      
+    } catch (error) {
+      console.error('❌ Order completion error:', error);
       toast({
-        title: 'Payment Error',
-        description: error.message || 'Failed to complete payment',
+        title: 'Order Failed',
+        description: error instanceof Error ? error.message : 'Something went wrong',
         variant: 'destructive',
       });
     } finally {
@@ -163,7 +145,7 @@ export const PendingPayments = () => {
   };
 
   if (isLoading) {
-    return <div className="p-6">Loading pending payments...</div>;
+    return <div className="p-6">Loading pending orders...</div>;
   }
 
   if (!pendingOrders || pendingOrders.length === 0) {
@@ -175,7 +157,7 @@ export const PendingPayments = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <AlertCircle className="h-5 w-5 text-orange-500" />
-          <h2 className="text-2xl font-bold">Pending Payments</h2>
+          <h2 className="text-2xl font-bold">Pending Orders</h2>
         </div>
         <Badge variant="secondary" className="bg-orange-100 text-orange-800">
           {pendingOrders.length} Pending
@@ -190,7 +172,7 @@ export const PendingPayments = () => {
                 <CardTitle className="text-lg">Order #{pendingOrder.order_number}</CardTitle>
                 <Badge variant="secondary" className="flex items-center gap-1 bg-orange-100 text-orange-800">
                   <Clock className="w-3 h-3" />
-                  Payment Pending
+                  Pending Confirmation
                 </Badge>
               </div>
             </CardHeader>
@@ -289,22 +271,12 @@ export const PendingPayments = () => {
                 </div>
                 <div className="flex gap-3">
                   <Button 
-                    onClick={() => completePayment(pendingOrder)}
+                    onClick={() => completeOrder(pendingOrder)}
                     disabled={processingOrderId === pendingOrder.id}
                     className="flex-1"
                   >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    {processingOrderId === pendingOrder.id ? 'Processing...' : 'Complete Payment'}
-                  </Button>
-                  <Button 
-                    onClick={() => setShowManualVerification(
-                      showManualVerification === pendingOrder.id ? null : pendingOrder.id
-                    )}
-                    variant="secondary"
-                    disabled={processingOrderId === pendingOrder.id}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Already Paid?
+                    <ShoppingBag className="w-4 h-4 mr-2" />
+                    {processingOrderId === pendingOrder.id ? 'Processing...' : 'Confirm Order'}
                   </Button>
                   <Button 
                     onClick={() => cancelPendingOrder(pendingOrder)}
@@ -314,25 +286,6 @@ export const PendingPayments = () => {
                     Cancel
                   </Button>
                 </div>
-                
-                <PaymentDebugInfo pendingOrder={pendingOrder} />
-                
-                <PaymentLinkVerification
-                  pendingOrder={pendingOrder}
-                  onSuccess={() => {
-                    refetch();
-                  }}
-                />
-                
-                {showManualVerification === pendingOrder.id && (
-                  <ManualPaymentVerification
-                    pendingOrder={pendingOrder}
-                    onSuccess={() => {
-                      setShowManualVerification(null);
-                      refetch();
-                    }}
-                  />
-                )}
               </div>
             </CardContent>
           </Card>
