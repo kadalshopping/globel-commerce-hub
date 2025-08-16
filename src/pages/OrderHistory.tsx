@@ -3,6 +3,7 @@ import { PendingPayments } from "@/components/orders/PendingPayments";
 import { AddMoreProducts } from "@/components/orders/AddMoreProducts";
 import { ContinueCheckout } from "@/components/orders/ContinueCheckout";
 import { PaymentDebugTester } from "@/components/orders/PaymentDebugTester";
+{process.env.NODE_ENV === "development" && <PaymentDebugTester />}
 
 
 const OrderHistory = () => {
