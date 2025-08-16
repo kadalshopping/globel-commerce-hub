@@ -36,7 +36,9 @@ serve(async (req) => {
       hasSupabaseKey: !!supabaseAnonKey,
       hasServiceKey: !!supabaseServiceKey,
       hasRazorpayId: !!razorpayKeyId,
-      hasRazorpaySecret: !!razorpayKeySecret
+      hasRazorpaySecret: !!razorpayKeySecret,
+      razorpayIdLength: razorpayKeyId?.length || 0,
+      razorpaySecretLength: razorpayKeySecret?.length || 0
     });
 
     if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
@@ -44,7 +46,8 @@ serve(async (req) => {
     }
 
     if (!razorpayKeyId || !razorpayKeySecret) {
-      throw new Error('Razorpay credentials not configured');
+      console.error("❌ Missing Razorpay credentials. Available env vars:", Object.keys(Deno.env.toObject()));
+      throw new Error('Razorpay credentials not configured. Please check Supabase secrets.');
     }
 
     // Create Supabase clients
