@@ -47,8 +47,16 @@ serve(async (req) => {
 
     if (!razorpayKeyId || !razorpayKeySecret) {
       console.error("❌ Missing Razorpay credentials. Available env vars:", Object.keys(Deno.env.toObject()));
+      console.error("🔍 Credential check:", {
+        hasRazorpayId: !!razorpayKeyId,
+        hasRazorpaySecret: !!razorpayKeySecret,
+        razorpayIdLength: razorpayKeyId?.length || 0,
+        razorpaySecretLength: razorpayKeySecret?.length || 0
+      });
       throw new Error('Razorpay credentials not configured. Please check Supabase secrets.');
     }
+
+    console.log("✅ All credentials verified successfully");
 
     // Create Supabase clients
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -120,11 +128,11 @@ serve(async (req) => {
         contact: deliveryAddress?.phone || ''
       },
       notify: {
-        sms: true,
+        sms: false, // Disable SMS to avoid issues
         email: true,
         whatsapp: false
       },
-      reminder_enable: true,
+      reminder_enable: false, // Disable reminders initially
       notes: {
         order_id: pendingOrder.id,
         order_number: orderNumber,
@@ -135,9 +143,19 @@ serve(async (req) => {
       callback_method: 'get'
     };
 
+    console.log("💰 Payment link data prepared:", {
+      amount: paymentLinkData.amount,
+      currency: paymentLinkData.currency,
+      customerEmail: paymentLinkData.customer.email,
+      callbackUrl: paymentLinkData.callback_url
+    });
+
     console.log("🔗 Creating payment link with Razorpay API...");
+    console.log("📊 Payment link payload:", JSON.stringify(paymentLinkData, null, 2));
 
     const auth = btoa(`${razorpayKeyId}:${razorpayKeySecret}`);
+    console.log("🔐 Auth header created, making API call to Razorpay...");
+    
     const response = await fetch('https://api.razorpay.com/v1/payment_links', {
       method: 'POST',
       headers: {
@@ -147,11 +165,15 @@ serve(async (req) => {
       body: JSON.stringify(paymentLinkData)
     });
 
+    console.log(`📡 Razorpay API response status: ${response.status}`);
+    
     const razorpayLinkData = await response.json();
+    console.log("📦 Razorpay API response:", JSON.stringify(razorpayLinkData, null, 2));
     
     if (!response.ok) {
       console.error("❌ Razorpay API error:", razorpayLinkData);
-      throw new Error(razorpayLinkData.error?.description || 'Failed to create Razorpay payment link');
+      console.error(`❌ Response status: ${response.status}, Status text: ${response.statusText}`);
+      throw new Error(`Razorpay API Error (${response.status}): ${razorpayLinkData.error?.description || razorpayLinkData.error?.code || 'Unknown error'}`);
     }
 
     console.log("✅ Razorpay payment link created:", razorpayLinkData.id);
@@ -186,9 +208,30 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Error creating payment link:', error);
+    
+    // Enhanced error logging
+    const errorDetails = {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.error('📋 Detailed error information:', JSON.stringify(errorDetails, null, 2));
+    
+    // Check if it's a Razorpay API error
+    if (error.message.includes('Razorpay')) {
+      console.error('🔑 Razorpay API issue detected - check credentials and API call');
+    }
+    
     return new Response(JSON.stringify({
       error: error.message,
-      success: false
+      success: false,
+      debug: {
+        timestamp: new Date().toISOString(),
+        function: 'create-payment-link',
+        errorType: error.name
+      }
     }), {
       status: 500,
       headers: {
