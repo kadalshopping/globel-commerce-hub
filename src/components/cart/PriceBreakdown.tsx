@@ -24,7 +24,7 @@ export const PriceBreakdown: React.FC<PriceBreakdownProps> = ({ cartTotal, onTot
   }, [breakdown, onTotalChange]);
 
   const handleApplyCoupon = () => {
-    const validCoupons = ['SAVE10', 'WELCOME20'];
+    const validCoupons = ['SAVE10', 'WELCOME20', 'NEW2025'];
     if (validCoupons.includes(couponCode.toUpperCase())) {
       setAppliedCoupon(couponCode.toUpperCase());
       setCouponError('');
@@ -107,6 +107,7 @@ export const PriceBreakdown: React.FC<PriceBreakdownProps> = ({ cartTotal, onTot
               <div className="flex gap-1 flex-wrap">
                 <Badge variant="secondary" className="text-xs">SAVE10 - 10% off</Badge>
                 <Badge variant="secondary" className="text-xs">WELCOME20 - 20% off</Badge>
+                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">NEW2025 - No extra charges!</Badge>
               </div>
             </div>
           )}
@@ -138,7 +139,16 @@ export const PriceBreakdown: React.FC<PriceBreakdownProps> = ({ cartTotal, onTot
             <CreditCard className="w-3 h-3" />
             Platform Charge (2%)
           </span>
-          <span className="font-medium">{formatPrice(breakdown.platformCharge)}</span>
+          <div className="text-right">
+            {breakdown.platformCharge === 0 && appliedCoupon === 'NEW2025' ? (
+              <div>
+                <span className="font-medium text-green-600">WAIVED</span>
+                <p className="text-xs text-muted-foreground">NEW2025 applied</p>
+              </div>
+            ) : (
+              <span className="font-medium">{formatPrice(breakdown.platformCharge)}</span>
+            )}
+          </div>
         </div>
 
         <Separator />
@@ -146,7 +156,16 @@ export const PriceBreakdown: React.FC<PriceBreakdownProps> = ({ cartTotal, onTot
         {/* GST */}
         <div className="flex justify-between items-center">
           <span className="text-sm text-muted-foreground">GST (18%)</span>
-          <span className="font-medium">{formatPrice(breakdown.gst)}</span>
+          <div className="text-right">
+            {breakdown.gst === 0 && appliedCoupon === 'NEW2025' ? (
+              <div>
+                <span className="font-medium text-green-600">WAIVED</span>
+                <p className="text-xs text-muted-foreground">NEW2025 applied</p>
+              </div>
+            ) : (
+              <span className="font-medium">{formatPrice(breakdown.gst)}</span>
+            )}
+          </div>
         </div>
 
         <Separator />
@@ -158,11 +177,22 @@ export const PriceBreakdown: React.FC<PriceBreakdownProps> = ({ cartTotal, onTot
         </div>
 
         {/* Savings Display */}
-        {(breakdown.discount + breakdown.couponDiscount) > 0 && (
+        {((breakdown.discount + breakdown.couponDiscount) > 0 || appliedCoupon === 'NEW2025') && (
           <div className="bg-green-50 p-3 rounded-lg">
-            <p className="text-sm text-green-700 font-medium">
-              🎉 You saved {formatPrice(breakdown.discount + breakdown.couponDiscount)}!
-            </p>
+            {appliedCoupon === 'NEW2025' ? (
+              <div>
+                <p className="text-sm text-green-700 font-medium">
+                  🎉 NEW2025 Applied! All additional charges waived!
+                </p>
+                <p className="text-xs text-green-600 mt-1">
+                  Saved on delivery, platform charge & GST
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-green-700 font-medium">
+                🎉 You saved {formatPrice(breakdown.discount + breakdown.couponDiscount)}!
+              </p>
+            )}
           </div>
         )}
       </CardContent>
