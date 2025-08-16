@@ -30,7 +30,7 @@ const SimpleOrderButton = () => {
         } as any,
         items: cart.items as any,
         order_number: orderNumber,
-        payment_status: 'completed',
+        payment_status: 'pending',
         status: 'pending'
       })
       .select()

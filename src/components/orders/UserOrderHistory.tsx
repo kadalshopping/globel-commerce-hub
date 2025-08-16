@@ -6,6 +6,8 @@ import { useCart } from "@/contexts/CartContext";
 import { Package, Truck, CheckCircle, Clock, ShoppingCart } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { CreditCard } from "lucide-react";
 
 export const UserOrderHistory = () => {
   const { data: orders, isLoading } = useUserOrders();
@@ -35,13 +37,38 @@ export const UserOrderHistory = () => {
 
   const getPaymentStatusBadge = (status: string) => {
     const statusMap = {
-      pending: { label: 'Payment Pending', variant: 'secondary' as const },
+      pending: { label: 'Payment Processing Required', variant: 'destructive' as const },
       completed: { label: 'Payment Completed', variant: 'default' as const },
       failed: { label: 'Payment Failed', variant: 'destructive' as const },
     };
     
     const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status, variant: 'secondary' as const };
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+  };
+
+  const processPayment = async (order: any) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ payment_status: 'completed' })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Payment Processed',
+        description: `Payment for order #${order.order_number} has been marked as completed.`,
+      });
+      
+      // Refresh the orders
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to process payment',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleReorder = (order: any) => {
@@ -138,7 +165,17 @@ export const UserOrderHistory = () => {
                     <span className="font-medium">Total</span>
                     <span className="text-lg font-bold">₹{order.total_amount}</span>
                   </div>
-                  <div className="mt-4">
+                  <div className="mt-4 space-y-2">
+                    {order.payment_status === 'pending' && (
+                      <Button 
+                        onClick={() => processPayment(order)}
+                        className="w-full"
+                        variant="default"
+                      >
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Mark Payment as Processed (₹{order.total_amount})
+                      </Button>
+                    )}
                     <Button 
                       onClick={() => handleReorder(order)}
                       className="w-full"

@@ -33,7 +33,7 @@ export const PendingPayments = () => {
           delivery_address: pendingOrder.delivery_address,
           items: pendingOrder.items,
           order_number: pendingOrder.order_number,
-          payment_status: 'completed',
+          payment_status: 'pending',
           status: 'pending'
         })
         .select()
