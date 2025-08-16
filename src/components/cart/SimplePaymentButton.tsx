@@ -95,129 +95,45 @@ const SimplePaymentButton = () => {
 
       console.log('✅ Pending order created:', pendingOrder.id);
 
-      // Use test Razorpay credentials for now (will be replaced with real credentials)
-      const testRazorpayKeyId = 'rzp_test_11Hg7Vgf6ifHBE';
+      console.log('💳 Creating payment with real Razorpay credentials via edge function...');
       
-      const razorpayOptions = {
-        key: testRazorpayKeyId,
-        amount: Math.round(cart.total * 100), // Convert to paise
-        currency: 'INR',
-        name: 'Shopping Kadal',
-        description: `Payment for ${cart.itemCount} items`,
-        order_id: undefined, // Will create order directly with Razorpay
-        handler: async function (response: any) {
-          console.log('✅ Payment successful, processing...', response);
-          
-          try {
-            // Create confirmed order with payment details
-            const confirmedOrderNumber = response.razorpay_payment_id || `pay_completed_${Date.now()}`;
-            
-            const { data: confirmedOrder, error: orderError } = await supabase
-              .from('orders')
-              .insert({
-                user_id: user.id,
-                order_number: confirmedOrderNumber,
-                total_amount: cart.total,
-                status: 'confirmed',
-                payment_status: 'completed',
-                payment_id: null,
-                razorpay_order_id: response.razorpay_order_id || null,
-                razorpay_payment_id: response.razorpay_payment_id || confirmedOrderNumber,
-                delivery_address: pendingOrder.delivery_address,
-                items: pendingOrder.items
-              })
-              .select()
-              .single();
-
-            if (orderError) {
-              console.error('❌ Order creation error:', orderError);
-              throw new Error('Failed to create confirmed order');
-            }
-
-            console.log('✅ Confirmed order created:', confirmedOrder.id);
-
-            // Create order items and update stock
-            const items = pendingOrder.items as any[];
-            for (const item of items) {
-              try {
-                // Get product details
-                const { data: product } = await supabase
-                  .from('products')
-                  .select('shop_owner_id')
-                  .eq('id', item.productId)
-                  .single();
-
-                if (product) {
-                  // Create order item
-                  await supabase
-                    .from('order_items')
-                    .insert({
-                      order_id: confirmedOrder.id,
-                      product_id: item.productId,
-                      shop_owner_id: product.shop_owner_id,
-                      quantity: item.quantity,
-                      price: item.price,
-                      status: 'pending'
-                    });
-
-                  // Update stock
-                  await supabase.rpc('decrease_product_stock', {
-                    product_id_param: item.productId,
-                    quantity_param: item.quantity
-                  });
-
-                  console.log(`✅ Processed item: ${item.productId}`);
-                }
-              } catch (itemError) {
-                console.error(`❌ Error processing item ${item.productId}:`, itemError);
-              }
-            }
-
-            // Delete pending order
-            await supabase
-              .from('pending_orders')
-              .delete()
-              .eq('id', pendingOrder.id);
-
-            console.log('✅ Payment processing completed successfully');
-
-            toast({
-              title: '🎉 Payment Successful!',
-              description: `Order confirmed! Order number: ${confirmedOrderNumber}`,
-            });
-
-            clearCart();
-            
-            setTimeout(() => {
-              navigate('/orders');
-            }, 1500);
-
-          } catch (processingError) {
-            console.error('❌ Payment processing error:', processingError);
-            toast({
-              title: 'Payment Processing Error',
-              description: 'Payment completed but order processing failed. Please contact support.',
-              variant: 'destructive',
-            });
+      // Create payment link instead of direct payment (uses real credentials from Supabase)
+      const { data: paymentLinkData, error: linkError } = await supabase.functions.invoke('create-payment-link', {
+        body: {
+          amount: cart.total,
+          cartItems: cart.items.map(item => ({
+            id: item.id,
+            productId: item.id.replace('cart_', ''),
+            title: item.title,
+            price: item.price,
+            image: item.image,
+            maxStock: item.maxStock,
+            quantity: item.quantity
+          })),
+          deliveryAddress: {
+            fullName: user.user_metadata?.full_name || 'Customer',
+            email: user.email || 'customer@example.com'
           }
-        },
-        prefill: {
-          name: user.user_metadata?.full_name || 'Customer',
-          email: user.email || 'customer@example.com',
-        },
-        theme: {
-          color: '#3B82F6',
-        },
-        modal: {
-          ondismiss: function () {
-            console.log('❌ Payment cancelled by user');
-            setLoading(false);
-          },
-        },
-      };
+        }
+      });
 
-      const paymentObject = new window.Razorpay(razorpayOptions);
-      paymentObject.open();
+      if (linkError || !paymentLinkData?.success) {
+        console.error('❌ Payment link creation failed:', linkError);
+        throw new Error(`Failed to create payment: ${linkError?.message || 'Unknown error'}`);
+      }
+
+      console.log('✅ Payment link created with real credentials:', paymentLinkData);
+
+      // Open payment link in new tab and clear cart
+      window.open(paymentLinkData.payment_link_url, '_blank');
+      
+      toast({
+        title: '🔗 Payment Link Created!',
+        description: 'Complete payment in the opened tab to confirm your order.',
+      });
+
+      clearCart();
+      navigate('/orders');
       
     } catch (error) {
       console.error('❌ Payment error:', error);

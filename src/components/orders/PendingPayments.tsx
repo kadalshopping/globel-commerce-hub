@@ -50,141 +50,42 @@ export const PendingPayments = () => {
         throw new Error('Failed to load payment gateway');
       }
 
-      // Create order via edge function (uses real keys)
-      console.log('💳 Processing payment directly with Razorpay (bypassing edge function)...');
+      // Create payment link with real Razorpay credentials from Supabase
+      console.log('🔗 Creating payment link with real Razorpay credentials...');
       
-      // Use test Razorpay credentials (more reliable than edge functions)
-      const testRazorpayKeyId = 'rzp_test_11Hg7Vgf6ifHBE';
-
-      console.log('✅ Using direct Razorpay integration');
-
-      const options = {
-        key: testRazorpayKeyId, // Using test key directly
-        amount: Math.round(pendingOrder.total_amount * 100), // Convert to paise
-        currency: 'INR',
-        name: 'Shopping Kadal',
-        description: `Order #${pendingOrder.order_number}`,
-        order_id: undefined, // Direct payment without pre-order
-        handler: async (response: any) => {
-          try {
-            // Skip edge function verification and create order directly
-            console.log('💳 Payment successful, creating order directly...', response);
-            
-            try {
-              console.log('🔄 Creating confirmed order directly...');
-              
-              // Create confirmed order directly with payment ID as order number
-              const orderNumber = response.razorpay_payment_id || `pay_completed_${Date.now()}`;
-              const { data: confirmedOrder, error: orderError } = await supabase
-                .from('orders')
-                .insert({
-                  user_id: user.id,
-                  order_number: orderNumber,
-                  total_amount: pendingOrder.total_amount,
-                  status: 'confirmed',
-                  payment_status: 'completed',
-                  payment_id: null,
-                  razorpay_order_id: response.razorpay_order_id || null,
-                  razorpay_payment_id: response.razorpay_payment_id || orderNumber,
-                  delivery_address: pendingOrder.delivery_address,
-                  items: pendingOrder.items,
-                })
-                .select()
-                .single();
-
-              if (orderError) {
-                throw new Error('Failed to create confirmed order');
-              }
-
-              console.log('✅ Direct order creation successful:', confirmedOrder.id);
-
-              // Create order items and update stock
-              const items = pendingOrder.items as any[];
-              for (const item of items) {
-                const { data: product } = await supabase
-                  .from('products')
-                  .select('shop_owner_id')
-                  .eq('id', item.productId)
-                  .maybeSingle();
-
-                if (product) {
-                  await supabase
-                    .from('order_items')
-                    .insert({
-                      order_id: confirmedOrder.id,
-                      product_id: item.productId,
-                      shop_owner_id: product.shop_owner_id,
-                      quantity: item.quantity,
-                      price: item.price,
-                      status: 'pending'
-                    });
-
-                  await supabase.rpc('decrease_product_stock', {
-                    product_id_param: item.productId,
-                    quantity_param: item.quantity
-                  });
-                }
-              }
-
-              // Delete pending order
-              await supabase
-                .from('pending_orders')
-                .delete()
-                .eq('id', pendingOrder.id);
-
-              toast({
-                title: '🎉 Payment Successful!',
-                description: `Order #${orderNumber} has been confirmed`,
-              });
-
-              // Refresh the orders list
-              refetch();
-
-            } catch (directError) {
-              console.error('❌ Direct order creation failed:', directError);
-              toast({
-                title: 'Payment Processing Error',
-                description: 'Payment was completed but order creation failed. Please contact support with your payment details.',
-                variant: 'destructive',
-              });
-            }
-
-          } catch (error) {
-            console.error('❌ Payment verification error:', error);
-            toast({
-              title: 'Payment Verification Failed',
-              description: 'Payment was processed but verification failed. Please contact support.',
-              variant: 'destructive',
-            });
-          }
-        },
-        prefill: {
-          name: user.user_metadata?.full_name || 'Customer',
-          email: user.email,
-        },
-        theme: {
-          color: '#3b82f6'
-        },
-        modal: {
-          ondismiss: () => {
-            console.log('💸 Payment cancelled by user');
-            toast({
-              title: 'Payment Cancelled',
-              description: 'You can complete the payment anytime from your orders page.',
-            });
-          }
+      const { data: paymentLinkData, error: linkError } = await supabase.functions.invoke('create-payment-link', {
+        body: {
+          amount: pendingOrder.total_amount,
+          cartItems: pendingOrder.items,
+          deliveryAddress: pendingOrder.delivery_address
         }
-      };
+      });
 
-      // Open Razorpay checkout
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      if (linkError || !paymentLinkData?.success) {
+        console.error('❌ Payment link creation failed:', linkError);
+        throw new Error(`Failed to create payment link: ${linkError?.message || 'Unknown error'}`);
+      }
 
-    } catch (error) {
-      console.error('❌ Payment initiation error:', error);
+      console.log('✅ Payment link created with real Razorpay credentials:', paymentLinkData);
+
+      // Open payment link in new tab
+      window.open(paymentLinkData.payment_link_url, '_blank');
+      
       toast({
-        title: 'Payment Failed',
-        description: error instanceof Error ? error.message : 'Something went wrong',
+        title: '🔗 Payment Link Created!',
+        description: 'Complete payment in the opened tab to confirm your order.',
+      });
+
+      // Refresh orders after a delay
+      setTimeout(() => {
+        refetch();
+      }, 2000);
+
+    } catch (error: any) {
+      console.error('❌ Payment error:', error);
+      toast({
+        title: 'Payment Error',
+        description: error.message || 'Failed to complete payment',
         variant: 'destructive',
       });
     } finally {
