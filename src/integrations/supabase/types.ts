@@ -218,6 +218,7 @@ export type Database = {
           id: string
           items: Json
           order_number: string
+          price_breakdown: Json | null
           razorpay_order_id: string
           total_amount: number
           updated_at: string
@@ -229,6 +230,7 @@ export type Database = {
           id?: string
           items: Json
           order_number: string
+          price_breakdown?: Json | null
           razorpay_order_id: string
           total_amount: number
           updated_at?: string
@@ -240,6 +242,7 @@ export type Database = {
           id?: string
           items?: Json
           order_number?: string
+          price_breakdown?: Json | null
           razorpay_order_id?: string
           total_amount?: number
           updated_at?: string

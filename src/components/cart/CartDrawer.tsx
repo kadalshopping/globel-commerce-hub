@@ -95,14 +95,14 @@ export const CartDrawer = () => {
           
           {cart.items.length > 0 && (
             <div className="border-t pt-4 mt-4 space-y-4">
-              <div className="bg-green-50 p-3 rounded-lg">
-                <p className="text-sm text-green-700 font-medium mb-1">
-                  🛒 Ready to Place Order
-                </p>
-                <p className="text-xs text-green-600">
-                  Review your items and pricing below, then click "Place Order"
-                </p>
-              </div>
+        <div className="bg-green-50 p-3 rounded-lg">
+          <p className="text-sm text-green-700 font-medium mb-1">
+            🛒 Ready to Checkout with Razorpay
+          </p>
+          <p className="text-xs text-green-600">
+            Review items and pricing below, then click "Checkout" to create secure payment link
+          </p>
+        </div>
               <PriceBreakdown 
                 cartTotal={cart.total} 
                 onTotalChange={setPriceBreakdown}

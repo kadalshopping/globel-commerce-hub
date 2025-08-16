@@ -227,7 +227,8 @@ async function processPaymentCompletion(supabaseClient: any, paymentLinkId: stri
         razorpay_order_id: paymentLinkId,
         razorpay_payment_id: paymentId,
         delivery_address: pendingOrder.delivery_address,
-        items: pendingOrder.items
+        items: pendingOrder.items,
+        price_breakdown: pendingOrder.price_breakdown // Transfer price breakdown from pending order
       })
       .select()
       .single();

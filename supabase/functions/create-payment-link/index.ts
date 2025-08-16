@@ -95,7 +95,8 @@ serve(async (req) => {
         total_amount: amount,
         delivery_address: deliveryAddress,
         items: cartItems,
-        razorpay_order_id: `temp_${Date.now()}` // Temporary, will be updated
+        razorpay_order_id: `temp_${Date.now()}`, // Temporary, will be updated
+        price_breakdown: priceBreakdown // Store price breakdown for later use
       })
       .select()
       .single();
