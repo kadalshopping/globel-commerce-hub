@@ -261,7 +261,7 @@ async function processPaymentCompletion(supabaseClient: any, paymentLinkId: stri
               shop_owner_id: product.shop_owner_id,
               quantity: item.quantity,
               price: item.price,
-              status: 'waiting_for_dispatch'
+              status: 'pending'
             });
 
           // Update stock
