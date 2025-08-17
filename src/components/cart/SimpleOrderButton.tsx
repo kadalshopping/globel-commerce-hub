@@ -73,7 +73,7 @@ const SimpleOrderButton: React.FC<SimpleOrderButtonProps> = ({ priceBreakdown })
           
           toast({
             title: '🎉 Payment Successful!',
-            description: 'Your order has been confirmed and is waiting for dispatch.',
+            description: 'Your order is confirmed and ready to dispatch.',
           });
           
           setTimeout(() => {
@@ -209,7 +209,7 @@ const SimpleOrderButton: React.FC<SimpleOrderButtonProps> = ({ priceBreakdown })
             <ShoppingBag className="w-6 h-6 text-green-600" />
           </div>
           <h3 className="font-semibold text-green-800">Payment Successful!</h3>
-          <p className="text-sm text-green-600">Your order is confirmed and waiting for dispatch.</p>
+          <p className="text-sm text-green-600">Your order is confirmed and ready to dispatch.</p>
         </div>
         <Button onClick={() => navigate('/orders')} className="w-full" variant="outline">
           View My Orders

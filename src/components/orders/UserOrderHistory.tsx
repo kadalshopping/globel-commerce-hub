@@ -18,9 +18,20 @@ export const UserOrderHistory = () => {
     return <div className="p-6">Loading your order history...</div>;
   }
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, paymentStatus: string) => {
+    // Show "Ready to Dispatch" when payment is completed
+    if (paymentStatus === 'completed' && status === 'confirmed') {
+      return (
+        <Badge variant="default" className="flex items-center gap-1 bg-green-100 text-green-800">
+          <CheckCircle className="w-3 h-3" />
+          Ready to Dispatch
+        </Badge>
+      );
+    }
+
     const statusMap = {
       pending: { label: 'Order Placed', variant: 'secondary' as const, icon: <Package className="w-3 h-3" /> },
+      confirmed: { label: 'Order Confirmed', variant: 'default' as const, icon: <CheckCircle className="w-3 h-3" /> },
       processing: { label: 'Processing', variant: 'default' as const, icon: <Clock className="w-3 h-3" /> },
       dispatched: { label: 'Dispatched', variant: 'default' as const, icon: <Truck className="w-3 h-3" /> },
       delivered: { label: 'Delivered', variant: 'default' as const, icon: <CheckCircle className="w-3 h-3" /> },
@@ -37,13 +48,43 @@ export const UserOrderHistory = () => {
 
   const getPaymentStatusBadge = (status: string) => {
     const statusMap = {
-      pending: { label: 'Payment Processing Required', variant: 'destructive' as const },
+      pending: { label: 'Payment Incomplete', variant: 'destructive' as const },
       completed: { label: 'Payment Completed', variant: 'default' as const },
       failed: { label: 'Payment Failed', variant: 'destructive' as const },
     };
     
     const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status, variant: 'secondary' as const };
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+  };
+
+  const completePayment = async (order: any) => {
+    try {
+      // Verify payment with Razorpay if needed
+      const { data: verificationResult, error } = await supabase.functions.invoke('verify-payment-link', {
+        body: {
+          payment_link_id: order.razorpay_order_id,
+          payment_id: 'manual_verification'
+        }
+      });
+
+      if (error) {
+        throw new Error('Payment verification failed');
+      }
+
+      toast({
+        title: '✅ Payment Verified!',
+        description: `Payment for order #${order.order_number} has been verified and completed.`,
+      });
+      
+      // Refresh the orders
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: 'Payment Verification Failed',
+        description: 'Please ensure payment was completed or contact support.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const processPayment = async (order: any) => {
@@ -110,13 +151,13 @@ export const UserOrderHistory = () => {
           {orders.map((order) => (
             <Card key={order.id}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Order #{order.order_number}</CardTitle>
-                  <div className="flex items-center gap-2">
-                    {getStatusBadge(order.status)}
-                    {getPaymentStatusBadge(order.payment_status)}
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Order #{order.order_number}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(order.status, order.payment_status)}
+                      {getPaymentStatusBadge(order.payment_status)}
+                    </div>
                   </div>
-                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -196,14 +237,33 @@ export const UserOrderHistory = () => {
                       </div>
                     )}
                     {order.payment_status === 'pending' && (
-                      <Button 
-                        onClick={() => processPayment(order)}
-                        className="w-full"
-                        variant="default"
-                      >
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        Mark Payment as Processed (₹{order.total_amount})
-                      </Button>
+                      <div className="space-y-2">
+                        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <div className="flex items-center gap-2 text-yellow-800">
+                            <Clock className="w-4 h-4" />
+                            <span className="font-medium">Payment Required</span>
+                          </div>
+                          <p className="text-sm text-yellow-700 mt-1">
+                            Complete your payment to confirm this order and start processing.
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={() => completePayment(order)}
+                          className="w-full bg-green-600 hover:bg-green-700"
+                        >
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          Complete Payment (₹{order.total_amount})
+                        </Button>
+                        {order.razorpay_order_id && (
+                          <Button 
+                            onClick={() => window.open(`https://razorpay.com/payment-link/${order.razorpay_order_id}`, '_blank')}
+                            className="w-full"
+                            variant="outline"
+                          >
+                            Open Payment Link
+                          </Button>
+                        )}
+                      </div>
                     )}
                     <Button 
                       onClick={() => handleReorder(order)}
