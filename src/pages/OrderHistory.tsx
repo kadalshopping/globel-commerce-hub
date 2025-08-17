@@ -3,6 +3,8 @@ import { PendingPayments } from "@/components/orders/PendingPayments";
 import { AddMoreProducts } from "@/components/orders/AddMoreProducts";
 import { ContinueCheckout } from "@/components/orders/ContinueCheckout";
 import { PaymentDebugTester } from "@/components/orders/PaymentDebugTester";
+{process.env.NODE_ENV === "development" && <PaymentDebugTester />}
+
 
 const OrderHistory = () => {
   return (
@@ -10,9 +12,7 @@ const OrderHistory = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-8">
-          <PaymentDebugTester />
           <PendingPayments />
-          <AddMoreProducts />
           <UserOrderHistory />
         </div>
         
