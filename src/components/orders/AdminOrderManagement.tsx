@@ -19,7 +19,7 @@ export const AdminOrderManagement = () => {
     return <div className="p-6">Loading orders...</div>;
   }
 
-  const pendingItems = orderItems?.filter(item => item.status === 'pending') || [];
+  const waitingItems = orderItems?.filter(item => item.status === 'waiting_for_dispatch') || [];
   const dispatchRequestedItems = orderItems?.filter(item => item.status === 'dispatch_requested') || [];
   const dispatchedItems = orderItems?.filter(item => item.status === 'dispatched') || [];
   const deliveredItems = orderItems?.filter(item => item.status === 'delivered') || [];
@@ -34,7 +34,7 @@ export const AdminOrderManagement = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap = {
-      pending: { label: 'Pending', variant: 'secondary' as const },
+      waiting_for_dispatch: { label: 'Waiting for Dispatch', variant: 'secondary' as const },
       dispatch_requested: { label: 'Dispatch Requested', variant: 'default' as const },
       dispatched: { label: 'Dispatched', variant: 'default' as const },
       delivered: { label: 'Delivered', variant: 'default' as const },
@@ -50,6 +50,7 @@ export const AdminOrderManagement = () => {
         <TableRow>
           <TableHead>Order #</TableHead>
           <TableHead>Product</TableHead>
+          <TableHead>Shop Owner</TableHead>
           <TableHead>Customer</TableHead>
           <TableHead>Quantity</TableHead>
           <TableHead>Amount</TableHead>
@@ -63,6 +64,7 @@ export const AdminOrderManagement = () => {
           <TableRow key={item.id}>
             <TableCell>#{item.order?.order_number}</TableCell>
             <TableCell>{item.product?.title}</TableCell>
+            <TableCell>{item.shop_owner_profiles?.full_name || 'Shop Owner'}</TableCell>
             <TableCell>Order #{item.order?.order_number}</TableCell>
             <TableCell>{item.quantity}</TableCell>
             <TableCell>₹{item.price}</TableCell>
@@ -148,11 +150,11 @@ export const AdminOrderManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
+            <CardTitle className="text-sm font-medium">Waiting for Dispatch</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingItems.length}</div>
+            <div className="text-2xl font-bold">{waitingItems.length}</div>
           </CardContent>
         </Card>
 
@@ -189,25 +191,25 @@ export const AdminOrderManagement = () => {
 
       <Tabs defaultValue="dispatch_requested" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="pending">Pending ({pendingItems.length})</TabsTrigger>
+          <TabsTrigger value="waiting">Waiting ({waitingItems.length})</TabsTrigger>
           <TabsTrigger value="dispatch_requested">Dispatch Requests ({dispatchRequestedItems.length})</TabsTrigger>
           <TabsTrigger value="dispatched">Dispatched ({dispatchedItems.length})</TabsTrigger>
           <TabsTrigger value="delivered">Delivered ({deliveredItems.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="pending">
+        <TabsContent value="waiting">
           <Card>
             <CardHeader>
-              <CardTitle>Pending Orders</CardTitle>
+              <CardTitle>Waiting for Dispatch</CardTitle>
             </CardHeader>
             <CardContent>
-              {pendingItems.length === 0 ? (
+              {waitingItems.length === 0 ? (
                 <div className="text-center py-8">
                   <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">No pending orders</p>
+                  <p className="text-muted-foreground">No orders waiting for dispatch</p>
                 </div>
               ) : (
-                <OrderTable items={pendingItems} />
+                <OrderTable items={waitingItems} />
               )}
             </CardContent>
           </Card>
