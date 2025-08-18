@@ -202,6 +202,13 @@ const Auth = () => {
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Create Account
                 </Button>
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  By creating an account, you agree to our{' '}
+                  <a href="/privacy-policy" className="underline hover:text-primary">
+                    Privacy Policy
+                  </a>
+                  {' '}and Terms of Service.
+                </p>
               </form>
             </TabsContent>
           </Tabs>

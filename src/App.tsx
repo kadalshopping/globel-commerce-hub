@@ -13,6 +13,7 @@ import OrderHistory from "./pages/OrderHistory";
 import UserProfile from "./pages/UserProfile";
 import Auth from "./pages/Auth";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/orders" element={<OrderHistory />} />
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

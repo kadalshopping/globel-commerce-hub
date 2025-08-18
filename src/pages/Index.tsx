@@ -1,4 +1,5 @@
 import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import { ScrollingOffers } from "@/components/layout/ScrollingOffers";
 import { HeroSection } from "@/components/home/HeroSection";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
@@ -10,14 +11,15 @@ const Index = () => {
   const isAdmin = user?.user_metadata?.role === 'admin';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <ScrollingOffers />
-      <main>
+      <main className="flex-1">
         <HeroSection />
         <FeaturedProducts />
         {isAdmin && <AdminProductManagement />}
       </main>
+      <Footer />
     </div>
   );
 };
