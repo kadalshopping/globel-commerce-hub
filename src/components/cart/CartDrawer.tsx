@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import SimpleOrderButton from './SimpleOrderButton';
+import InlinePaymentFlow from './InlinePaymentFlow';
 import { PriceBreakdown } from './PriceBreakdown';
 import { PriceBreakdown as PriceBreakdownType } from '@/utils/priceCalculations';
 import { useState } from 'react';
@@ -95,19 +96,30 @@ export const CartDrawer = () => {
           
           {cart.items.length > 0 && (
             <div className="border-t pt-4 mt-4 space-y-4">
-        <div className="bg-green-50 p-3 rounded-lg">
-          <p className="text-sm text-green-700 font-medium mb-1">
-            🛒 Ready to Checkout with Razorpay
-          </p>
-          <p className="text-xs text-green-600">
-            Review items and pricing below, then click "Checkout" to create secure payment link
-          </p>
-        </div>
+              <div className="bg-green-50 p-3 rounded-lg">
+                <p className="text-sm text-green-700 font-medium mb-1">
+                  🛒 Ready to Checkout with Razorpay
+                </p>
+                <p className="text-xs text-green-600">
+                  Choose your preferred payment method below
+                </p>
+              </div>
               <PriceBreakdown 
                 cartTotal={cart.total} 
                 onTotalChange={setPriceBreakdown}
               />
-              <SimpleOrderButton priceBreakdown={priceBreakdown} />
+              <div className="space-y-2">
+                <InlinePaymentFlow />
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">or</span>
+                  </div>
+                </div>
+                <SimpleOrderButton priceBreakdown={priceBreakdown} />
+              </div>
             </div>
           )}
         </div>

@@ -3,8 +3,7 @@ import { PendingPayments } from "@/components/orders/PendingPayments";
 import { AddMoreProducts } from "@/components/orders/AddMoreProducts";
 import { ContinueCheckout } from "@/components/orders/ContinueCheckout";
 import { PaymentDebugTester } from "@/components/orders/PaymentDebugTester";
-{process.env.NODE_ENV === "development" && <PaymentDebugTester />}
-
+import SameTabPaymentDemo from "@/components/cart/SameTabPaymentDemo";
 
 const OrderHistory = () => {
   return (
@@ -12,6 +11,7 @@ const OrderHistory = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-8">
+          <SameTabPaymentDemo />
           <PendingPayments />
           <UserOrderHistory />
         </div>
@@ -21,6 +21,8 @@ const OrderHistory = () => {
           <ContinueCheckout />
         </div>
       </div>
+      
+      {process.env.NODE_ENV === "development" && <PaymentDebugTester />}
     </div>
   );
 };
