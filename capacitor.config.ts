@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.kadal.shop',
-  appName: 'Kadal Shop',
+  appId: 'app.lovable.e338c9be34e940f281aaf8388810f4c5',
+  appName: 'globel-commerce-hub',
   webDir: 'dist',
   server: {
     url: 'https://e338c9be-34e9-40f2-81aa-f8388810f4c5.lovableproject.com?forceHideBadge=true',
