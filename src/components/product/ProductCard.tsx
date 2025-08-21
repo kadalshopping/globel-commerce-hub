@@ -61,8 +61,12 @@ export const ProductCard = ({
       maxStock: stockQuantity,
     });
   };
+  const handleCardClick = () => {
+    navigate(`/product/${id}`);
+  };
+
   return (
-    <Card className="group relative overflow-hidden border-0 shadow-sm hover:shadow-glow transition-all duration-300 bg-gradient-card">
+    <Card className="group relative overflow-hidden border-0 shadow-sm hover:shadow-glow transition-all duration-300 bg-gradient-card cursor-pointer" onClick={handleCardClick}>
       {/* Discount badge */}
       {discount && (
         <Badge className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 bg-destructive text-destructive-foreground text-xs">
@@ -122,7 +126,14 @@ export const ProductCard = ({
         </div>
 
         {/* Add to cart button */}
-        <Button variant="cart" className="w-full text-xs sm:text-sm h-8 sm:h-10" onClick={handleAddToCart}>
+        <Button 
+          variant="cart" 
+          className="w-full text-xs sm:text-sm h-8 sm:h-10" 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddToCart();
+          }}
+        >
           <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
           Add to Cart
         </Button>

@@ -14,6 +14,7 @@ import UserProfile from "./pages/UserProfile";
 import Auth from "./pages/Auth";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import ProductDetails from "./pages/ProductDetails";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/shop" element={<ShopOwnerDashboard />} />
               <Route path="/orders" element={<OrderHistory />} />
