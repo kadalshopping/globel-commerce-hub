@@ -52,9 +52,13 @@ export const Header = () => {
       <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
         <div className="flex items-center gap-2 sm:gap-8">
           {/* Logo */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center shadow-lg">
-              <span className="text-yellow-400 font-poppins font-black text-base sm:text-xl">K</span>
+          <div className="flex items-center gap-2 sm:gap-3 cursor-pointer" onClick={() => navigate('/')}>
+            <div className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-lg overflow-hidden shadow-lg hover-scale">
+              <img 
+                src="/lovable-uploads/67371650-0175-429b-b951-997f7ef76e93.png" 
+                alt="Kadal Shopping Logo" 
+                className="h-full w-full object-cover"
+              />
             </div>
             <h1 className="text-lg sm:text-2xl font-poppins font-bold text-primary">
               <span className="text-red-600">kadal</span>
