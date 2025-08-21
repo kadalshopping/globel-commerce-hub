@@ -1,7 +1,7 @@
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollingOffers } from "@/components/layout/ScrollingOffers";
-import { HeroSection } from "@/components/home/HeroSection";
+import { SlidingHeroSection } from "@/components/home/SlidingHeroSection";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { AdminProductManagement } from "@/components/admin/AdminProductManagement";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +15,7 @@ const Index = () => {
       <Header />
       <ScrollingOffers />
       <main className="flex-1">
-        <HeroSection />
+        <SlidingHeroSection />
         <FeaturedProducts />
         {isAdmin && <AdminProductManagement />}
       </main>
