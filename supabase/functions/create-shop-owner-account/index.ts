@@ -49,7 +49,8 @@ serve(async (req) => {
       throw new Error('Email, password, and full name are required')
     }
 
-    // Create the shop owner user
+    // Create the shop owner user - the handle_new_user trigger will automatically
+    // create the profile and assign the role based on user_metadata
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -64,29 +65,8 @@ serve(async (req) => {
       throw new Error(`Failed to create user: ${createError.message}`)
     }
 
-    // Insert into profiles table
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .insert({
-        user_id: newUser.user.id,
-        full_name: fullName
-      })
-
-    if (profileError) {
-      console.error('Profile creation error:', profileError)
-    }
-
-    // Assign shop_owner role
-    const { error: roleAssignError } = await supabaseAdmin
-      .from('user_roles')
-      .insert({
-        user_id: newUser.user.id,
-        role: 'shop_owner'
-      })
-
-    if (roleAssignError) {
-      throw new Error(`Failed to assign shop owner role: ${roleAssignError.message}`)
-    }
+    // The handle_new_user trigger automatically creates the profile and assigns the role
+    // No need to manually insert into profiles or user_roles tables
 
     return new Response(
       JSON.stringify({ 
