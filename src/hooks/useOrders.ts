@@ -55,18 +55,43 @@ export interface PayoutRequest {
   order_item?: OrderItem;
 }
 
-// Hook to fetch user orders
+// Hook to fetch user orders with shop owner details
 export const useUserOrders = () => {
   return useQuery({
     queryKey: ['user-orders'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: orders, error } = await supabase
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Order[];
+
+      // For each order, fetch the order items with shop owner details
+      const ordersWithShopOwners = await Promise.all(
+        (orders || []).map(async (order) => {
+          const { data: orderItems, error: itemsError } = await supabase
+            .from('order_items')
+            .select(`
+              *,
+              product:products(id, title, images),
+              shop_owner:profiles!shop_owner_id(full_name, address, phone)
+            `)
+            .eq('order_id', order.id);
+
+          if (itemsError) {
+            console.error('Error fetching order items:', itemsError);
+            return order;
+          }
+
+          return {
+            ...order,
+            order_items: orderItems || []
+          };
+        })
+      );
+
+      return ordersWithShopOwners as Order[];
     },
   });
 };
@@ -101,7 +126,8 @@ export const useAllOrderItems = () => {
         .select(`
           *,
           product:products(id, title, images),
-          order:orders(order_number, delivery_address, user_id)
+          order:orders(order_number, delivery_address, user_id),
+          shop_owner:profiles!shop_owner_id(full_name, address, phone)
         `)
         .order('created_at', { ascending: false });
       

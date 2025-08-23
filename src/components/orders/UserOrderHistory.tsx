@@ -184,21 +184,52 @@ export const UserOrderHistory = () => {
                   )}
                 </div>
 
-                {order.items && order.items.length > 0 && (
+                {((order as any).order_items && (order as any).order_items.length > 0) ? (
                   <div className="mt-4">
-                    <h4 className="font-medium mb-2">Items</h4>
-                    <div className="space-y-2">
-                      {order.items.map((item: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
-                          <div>
-                            <p className="font-medium">{item.title}</p>
-                            <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                    <h4 className="font-medium mb-2">Items & Shop Details</h4>
+                    <div className="space-y-3">
+                      {(order as any).order_items.map((item: any, index: number) => (
+                        <div key={index} className="p-3 bg-muted rounded-lg space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">{item.product?.title || item.title}</p>
+                              <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                            </div>
+                            <p className="font-medium">₹{item.price}</p>
                           </div>
-                          <p className="font-medium">₹{item.price}</p>
+                          {item.shop_owner && (
+                            <div className="pt-2 border-t border-muted-foreground/20">
+                              <p className="text-sm font-medium text-muted-foreground">Shop Owner:</p>
+                              <p className="text-sm">{item.shop_owner.full_name}</p>
+                              {item.shop_owner.address && (
+                                <p className="text-sm text-muted-foreground">{item.shop_owner.address}</p>
+                              )}
+                              {item.shop_owner.phone && (
+                                <p className="text-sm text-muted-foreground">Phone: {item.shop_owner.phone}</p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
                   </div>
+                ) : (
+                  order.items && order.items.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="font-medium mb-2">Items</h4>
+                      <div className="space-y-2">
+                        {order.items.map((item: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
+                            <div>
+                              <p className="font-medium">{item.title}</p>
+                              <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                            </div>
+                            <p className="font-medium">₹{item.price}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
                 )}
 
                 <div className="mt-4 pt-4 border-t">

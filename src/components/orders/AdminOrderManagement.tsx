@@ -64,7 +64,7 @@ export const AdminOrderManagement = () => {
           <TableRow key={item.id}>
             <TableCell>#{item.order?.order_number}</TableCell>
             <TableCell>{item.product?.title}</TableCell>
-            <TableCell>{item.shop_owner_profiles?.full_name || 'Shop Owner'}</TableCell>
+            <TableCell>{item.shop_owner?.full_name || 'Shop Owner'}</TableCell>
             <TableCell>Order #{item.order?.order_number}</TableCell>
             <TableCell>{item.quantity}</TableCell>
             <TableCell>₹{item.price}</TableCell>
@@ -97,8 +97,14 @@ export const AdminOrderManagement = () => {
                             <p className="text-sm">Price: ₹{selectedOrder.price}</p>
                           </div>
                           <div>
-                            <h4 className="font-medium">Customer Information</h4>
-                            <p className="text-sm">Name: {selectedOrder.order?.profiles?.full_name}</p>
+                            <h4 className="font-medium">Shop Owner</h4>
+                            <p className="text-sm">Name: {selectedOrder.shop_owner?.full_name || 'N/A'}</p>
+                            {selectedOrder.shop_owner?.address && (
+                              <p className="text-sm">Address: {selectedOrder.shop_owner.address}</p>
+                            )}
+                            {selectedOrder.shop_owner?.phone && (
+                              <p className="text-sm">Phone: {selectedOrder.shop_owner.phone}</p>
+                            )}
                           </div>
                         </div>
                         {selectedOrder.order?.delivery_address && (
