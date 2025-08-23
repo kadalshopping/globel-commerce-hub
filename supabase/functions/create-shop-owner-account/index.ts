@@ -62,7 +62,25 @@ serve(async (req) => {
     })
 
     if (createError) {
-      throw new Error(`Failed to create user: ${createError.message}`)
+      // Handle specific error cases
+      if (createError.message?.includes('User already registered')) {
+        return new Response(
+          JSON.stringify({ error: 'A user with this email address already exists' }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 409,
+          }
+        )
+      }
+      
+      console.error('User creation error:', createError)
+      return new Response(
+        JSON.stringify({ error: `Failed to create user: ${createError.message}` }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
     }
 
     // The handle_new_user trigger automatically creates the profile and assigns the role

@@ -49,7 +49,8 @@ serve(async (req) => {
       throw new Error('Email, password, and full name are required')
     }
 
-    // Create the admin user
+    // Create the admin user - the handle_new_user trigger will automatically
+    // create the profile and assign the role based on user_metadata
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -61,32 +62,29 @@ serve(async (req) => {
     })
 
     if (createError) {
-      throw new Error(`Failed to create user: ${createError.message}`)
+      // Handle specific error cases
+      if (createError.message?.includes('User already registered')) {
+        return new Response(
+          JSON.stringify({ error: 'A user with this email address already exists' }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 409,
+          }
+        )
+      }
+      
+      console.error('User creation error:', createError)
+      return new Response(
+        JSON.stringify({ error: `Failed to create user: ${createError.message}` }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
     }
 
-    // Insert into profiles table
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .insert({
-        user_id: newUser.user.id,
-        full_name: fullName
-      })
-
-    if (profileError) {
-      console.error('Profile creation error:', profileError)
-    }
-
-    // Assign admin role
-    const { error: roleAssignError } = await supabaseAdmin
-      .from('user_roles')
-      .insert({
-        user_id: newUser.user.id,
-        role: 'admin'
-      })
-
-    if (roleAssignError) {
-      throw new Error(`Failed to assign admin role: ${roleAssignError.message}`)
-    }
+    // The handle_new_user trigger automatically creates the profile and assigns the role
+    // No need to manually insert into profiles or user_roles tables
 
     return new Response(
       JSON.stringify({ 
