@@ -20,7 +20,13 @@ serve(async (req) => {
     // Get the authorization header
     const authHeader = req.headers.get('authorization')
     if (!authHeader) {
-      throw new Error('No authorization header')
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        }
+      )
     }
 
     // Verify the requesting user is an admin
@@ -28,7 +34,13 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
     
     if (authError || !user) {
-      throw new Error('Unauthorized')
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401,
+        }
+      )
     }
 
     // Check if user has admin role
@@ -40,13 +52,25 @@ serve(async (req) => {
       .single()
 
     if (roleError || !roleData) {
-      throw new Error('Only admins can create admin accounts')
+      return new Response(
+        JSON.stringify({ error: 'Only admins can create admin accounts' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403,
+        }
+      )
     }
 
     const { email, password, fullName } = await req.json()
 
     if (!email || !password || !fullName) {
-      throw new Error('Email, password, and full name are required')
+      return new Response(
+        JSON.stringify({ error: 'Email, password, and full name are required' }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
     }
 
     // Create the admin user - the handle_new_user trigger will automatically
