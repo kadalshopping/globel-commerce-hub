@@ -74,11 +74,9 @@ const InlinePaymentFlow = () => {
           description: 'Your order has been confirmed and is being processed.',
         });
 
-        // Clear cart and navigate after a short delay
+        // Clear cart after delay but keep modal open to show order status
         setTimeout(() => {
           clearCart();
-          setShowPaymentModal(false);
-          navigate('/orders');
         }, 2000);
       }
     } catch (error) {
@@ -252,21 +250,61 @@ const InlinePaymentFlow = () => {
           </DialogHeader>
 
           {paymentStatus.status === 'paid' ? (
-            <Card className="border-green-200 bg-green-50">
-              <CardHeader>
-                <CardTitle className="text-green-800 flex items-center gap-2">
-                  <CheckCircle className="w-6 h-6" />
-                  Payment Successful!
-                </CardTitle>
-                <CardDescription className="text-green-700">
-                  Your order has been confirmed. Redirecting to orders page...
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-green-700">
-                <p>Order ID: {paymentStatus.order_id}</p>
-                {paymentStatus.payment_id && <p>Payment ID: {paymentStatus.payment_id}</p>}
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <Card className="border-green-200 bg-green-50">
+                <CardHeader>
+                  <CardTitle className="text-green-800 flex items-center gap-2">
+                    <CheckCircle className="w-6 h-6" />
+                    Payment Successful!
+                  </CardTitle>
+                  <CardDescription className="text-green-700">
+                    Your order has been confirmed and is being processed.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-green-700 space-y-3">
+                  <div>
+                    <p className="font-semibold">Order Details:</p>
+                    <p>Order ID: {paymentStatus.order_id}</p>
+                    {paymentStatus.payment_id && <p>Payment ID: {paymentStatus.payment_id}</p>}
+                  </div>
+                  
+                  <div className="bg-white p-3 rounded border border-green-300">
+                    <p className="text-sm font-medium text-green-800 mb-2">Order Status: Confirmed</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Payment</span>
+                        <Badge className="bg-green-600 text-white">Completed</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Order Processing</span>
+                        <Badge className="bg-blue-600 text-white">In Progress</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Estimated Delivery</span>
+                        <span className="text-sm text-green-700">3-5 business days</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => navigate('/orders')}
+                      className="flex-1"
+                      variant="default"
+                    >
+                      View All Orders
+                    </Button>
+                    <Button
+                      onClick={handleCloseModal}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Continue Shopping
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           ) : (
             <div className="space-y-4">
               <Card>
