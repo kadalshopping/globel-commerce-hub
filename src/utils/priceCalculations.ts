@@ -31,14 +31,14 @@ export const calculatePriceBreakdown = (cartTotal: number, couponCode?: string):
   // Delivery charge (free for orders above ₹500 OR with NEW2025 coupon)
   const deliveryCharge = (subtotal >= 500 || isSpecialCoupon) ? 0 : 50;
   
-  // Platform charge (2% of subtotal, waived with NEW2025)
-  const platformCharge = isSpecialCoupon ? 0 : subtotal * 0.02;
+  // Platform charge (Flatfarm charges 0% - completely free!)
+  const platformCharge = 0;
   
   // Calculate amount after discounts and before tax
   const amountBeforeTax = subtotal - discount - couponDiscount + deliveryCharge + platformCharge;
   
-  // GST (18% on the final amount, waived with NEW2025)
-  const gst = isSpecialCoupon ? 0 : amountBeforeTax * 0.18;
+  // GST (included in product price - no additional charges)
+  const gst = 0;
   
   // Final total
   const total = amountBeforeTax + gst;

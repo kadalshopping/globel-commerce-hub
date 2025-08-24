@@ -5,7 +5,7 @@ export const FeaturedProducts = () => {
   const { data: approvedProducts = [], isLoading } = useProducts();
   
   // Only show approved products from database
-  const displayProducts = approvedProducts.slice(0, 6).map(product => ({
+  const displayProducts = approvedProducts.slice(0, 12).map(product => ({
     id: product.id,
     title: product.title,
     price: product.selling_price,
