@@ -2,7 +2,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ScrollingOffers } from "@/components/layout/ScrollingOffers";
 import { SlidingHeroSection } from "@/components/home/SlidingHeroSection";
-import { FeaturedProducts } from "@/components/home/FeaturedProducts";
+import { CategoryProducts } from "@/components/home/CategoryProducts";
 import { AdminProductManagement } from "@/components/admin/AdminProductManagement";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -43,7 +43,7 @@ const Index = () => {
           </div>
         </section>
         
-        <FeaturedProducts />
+        <CategoryProducts />
         {isAdmin && <AdminProductManagement />}
       </main>
       <Footer />
