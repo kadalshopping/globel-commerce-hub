@@ -1,12 +1,13 @@
 import { usePendingProducts } from '@/hooks/useProducts';
 import { ProductApprovalCard } from '@/components/admin/ProductApprovalCard';
 import { AdminOrderManagement } from '@/components/orders/AdminOrderManagement';
+import { ShopOwnerOrderView } from '@/components/admin/ShopOwnerOrderView';
 import CreateAccountForm from '@/components/admin/CreateAccountForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, Clock, AlertTriangle, ShoppingBag, Database, UserPlus } from 'lucide-react';
+import { Package, Clock, AlertTriangle, ShoppingBag, Database, UserPlus, Store } from 'lucide-react';
 import { useMigrateCompletedOrders } from '@/hooks/useOrderMigration';
 
 const AdminDashboard = () => {
@@ -62,6 +63,10 @@ const AdminDashboard = () => {
           <TabsList>
             <TabsTrigger value="products">Product Approvals</TabsTrigger>
             <TabsTrigger value="orders">Order Management</TabsTrigger>
+            <TabsTrigger value="shop-orders" className="flex items-center gap-2">
+              <Store className="h-4 w-4" />
+              Shop Owner Orders
+            </TabsTrigger>
             <TabsTrigger value="accounts" className="flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
               Create Accounts
@@ -94,6 +99,10 @@ const AdminDashboard = () => {
           
           <TabsContent value="orders" className="space-y-4">
             <AdminOrderManagement />
+          </TabsContent>
+          
+          <TabsContent value="shop-orders" className="space-y-4">
+            <ShopOwnerOrderView />
           </TabsContent>
           
           <TabsContent value="accounts" className="space-y-4">
