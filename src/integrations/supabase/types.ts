@@ -250,6 +250,36 @@ export type Database = {
         }
         Relationships: []
       }
+      product_reviews: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          rating: number
+          review_text: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          rating: number
+          review_text?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          rating?: number
+          review_text?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           admin_notes: string | null
@@ -411,7 +441,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      product_ratings: {
+        Row: {
+          average_rating: number | null
+          five_star_count: number | null
+          four_star_count: number | null
+          one_star_count: number | null
+          product_id: string | null
+          review_count: number | null
+          three_star_count: number | null
+          two_star_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       approve_product: {
