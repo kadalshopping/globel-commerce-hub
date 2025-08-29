@@ -20,6 +20,9 @@ export interface Product {
   approved_at?: string;
   created_at: string;
   updated_at: string;
+  // Optional rating fields for products with review data
+  average_rating?: number;
+  review_count?: number;
 }
 
 export interface CreateProductData {

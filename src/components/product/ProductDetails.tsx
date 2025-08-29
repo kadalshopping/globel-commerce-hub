@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { Star, Heart, ShoppingCart, Minus, Plus, Package, Truck, Shield, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Product } from "@/types/product";
+import { useProductRating } from "@/hooks/useReviews";
+import { ReviewSection } from "./ReviewSection";
 
 interface ProductDetailsProps {
   product: Product;
@@ -23,6 +25,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { data: rating } = useProductRating(product.id);
   
   const images = product.images && product.images.length > 0 
     ? product.images 
@@ -64,6 +67,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
   };
 
   return (
+    <>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
       {/* Product Images */}
       <div className="space-y-4">
@@ -121,12 +125,16 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
                 <Star
                   key={i}
                   className={`h-4 w-4 ${
-                    i < 4 ? 'fill-accent text-accent' : 'text-muted-foreground'
+                    i < Math.floor(rating?.average_rating || 0)
+                      ? 'fill-accent text-accent' 
+                      : 'text-muted-foreground'
                   }`}
                 />
               ))}
             </div>
-            <span className="text-sm text-muted-foreground">(4.5) • 324 reviews</span>
+            <span className="text-sm text-muted-foreground">
+              {rating ? `(${rating.average_rating}) • ${rating.review_count} review${rating.review_count !== 1 ? 's' : ''}` : 'No reviews yet'}
+            </span>
           </div>
         </div>
 
@@ -257,5 +265,9 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
         )}
       </div>
     </div>
+
+    {/* Reviews Section */}
+    <ReviewSection productId={product.id} />
+  </>
   );
 };

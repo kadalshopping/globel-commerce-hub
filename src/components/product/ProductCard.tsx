@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Heart, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useProductRating } from "@/hooks/useReviews";
 
 interface ProductCardProps {
   id: string;
@@ -13,8 +14,6 @@ interface ProductCardProps {
   price: number;
   originalPrice?: number;
   image: string;
-  rating: number;
-  reviewCount: number;
   discount?: number;
   isWishlisted?: boolean;
   stockQuantity?: number;
@@ -26,8 +25,6 @@ export const ProductCard = ({
   price,
   originalPrice,
   image,
-  rating,
-  reviewCount,
   discount,
   isWishlisted = false,
   stockQuantity = 0,
@@ -36,6 +33,7 @@ export const ProductCard = ({
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { data: rating } = useProductRating(id);
 
   const handleAddToCart = () => {
     if (!user) {
@@ -105,14 +103,16 @@ export const ProductCard = ({
               <Star
                 key={i}
                 className={`h-2 w-2 sm:h-3 sm:w-3 ${
-                  i < Math.floor(rating)
+                  i < Math.floor(rating?.average_rating || 0)
                     ? 'fill-accent text-accent'
                     : 'text-muted-foreground'
                 }`}
               />
             ))}
           </div>
-          <span className="text-xs text-muted-foreground">({reviewCount})</span>
+          <span className="text-xs text-muted-foreground">
+            ({rating?.review_count || 0})
+          </span>
         </div>
 
         {/* Price */}
