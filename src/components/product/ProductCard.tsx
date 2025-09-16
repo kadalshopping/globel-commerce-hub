@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, Heart, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProductRating } from "@/hooks/useReviews";
+import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 
 interface ProductCardProps {
   id: string;
@@ -82,13 +83,12 @@ export const ProductCard = ({
       </Button>
 
       {/* Product image */}
-      <div className="aspect-square overflow-hidden bg-muted">
-        <img
+      <div className="aspect-square overflow-hidden">
+        <ImageWithSkeleton
           src={image}
           alt={title}
           className="h-full w-full object-cover transition-transform group-hover:scale-105"
-          loading="lazy"
-          decoding="async"
+          skeletonClassName="aspect-square"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
         />
       </div>

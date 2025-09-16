@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Product } from "@/types/product";
 import { useProductRating } from "@/hooks/useReviews";
 import { ReviewSection } from "./ReviewSection";
+import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 
 interface ProductDetailsProps {
   product: Product;
@@ -71,13 +72,13 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
       {/* Product Images */}
       <div className="space-y-4">
-        <div className="aspect-square overflow-hidden rounded-lg bg-muted">
-          <img
+        <div className="aspect-square overflow-hidden rounded-lg">
+          <ImageWithSkeleton
             src={images[selectedImageIndex]}
             alt={product.title}
-            className="h-full w-full object-cover"
-            loading="eager"
-            decoding="async"
+            className="h-full w-full object-cover rounded-lg"
+            skeletonClassName="aspect-square rounded-lg"
+            priority={true}
             sizes="(max-width: 1024px) 100vw, 50vw"
           />
         </div>
@@ -94,12 +95,11 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
                     : 'border-transparent hover:border-muted-foreground'
                 }`}
               >
-                <img
+                <ImageWithSkeleton
                   src={image}
                   alt={`${product.title} ${index + 1}`}
                   className="h-full w-full object-cover"
-                  loading="lazy"
-                  decoding="async"
+                  skeletonClassName="w-16 h-16"
                   sizes="64px"
                 />
               </button>
