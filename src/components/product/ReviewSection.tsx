@@ -6,6 +6,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import { ImageWithSkeleton } from '@/components/ui/image-skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProductReviews, useProductRating, useDeleteReview } from '@/hooks/useReviews';
 import { ReviewForm } from './ReviewForm';
@@ -128,9 +129,11 @@ export const ReviewSection = ({ productId }: ReviewSectionProps) => {
             <Card key={review.id} className="p-4">
               <div className="flex items-start gap-4">
                 <Avatar className="h-10 w-10">
-                  <img 
+                  <ImageWithSkeleton
                     src={review.user_profile?.avatar_url || '/placeholder.svg'} 
                     alt={review.user_profile?.full_name || 'User'} 
+                    className="h-full w-full object-cover"
+                    optimizeSize={{ width: 64, height: 64, quality: 60 }}
                   />
                 </Avatar>
                 

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ImageWithSkeleton } from '@/components/ui/image-skeleton';
 import { Plus, Package, CheckCircle, XCircle, Clock, Edit, ShoppingBag } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
@@ -47,13 +48,11 @@ const ShopOwnerDashboard = () => {
               <CardTitle className="text-lg line-clamp-2">{product.title}</CardTitle>
               {product.images && product.images.length > 0 && (
                 <div className="mt-2">
-                  <img 
+                  <ImageWithSkeleton
                     src={product.images[0]} 
                     alt={product.title}
                     className="w-20 h-20 object-cover rounded-md"
-                    onError={(e) => {
-                      e.currentTarget.src = '/placeholder.svg';
-                    }}
+                    optimizeSize={{ width: 80, height: 80, quality: 65 }}
                   />
                 </div>
               )}
