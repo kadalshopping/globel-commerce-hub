@@ -76,6 +76,9 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
             src={images[selectedImageIndex]}
             alt={product.title}
             className="h-full w-full object-cover"
+            loading="eager"
+            decoding="async"
+            sizes="(max-width: 1024px) 100vw, 50vw"
           />
         </div>
         
@@ -95,6 +98,9 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
                   src={image}
                   alt={`${product.title} ${index + 1}`}
                   className="h-full w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  sizes="64px"
                 />
               </button>
             ))}

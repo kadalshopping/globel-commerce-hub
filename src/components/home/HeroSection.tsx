@@ -9,6 +9,9 @@ export const HeroSection = () => {
           src={heroImage}
           alt="Shop thousands of products"
           className="w-full h-full object-cover opacity-20"
+          loading="eager"
+          decoding="async"
+          sizes="100vw"
         />
       </div>
       

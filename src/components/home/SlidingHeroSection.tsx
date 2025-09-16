@@ -86,6 +86,9 @@ export const SlidingHeroSection = () => {
               src={slide.image}
               alt={slide.title}
               className="w-full h-full object-cover opacity-30"
+              loading={index === 0 ? "eager" : "lazy"}
+              decoding="async"
+              sizes="100vw"
             />
           </div>
         ))}

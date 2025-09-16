@@ -82,11 +82,14 @@ export const ProductCard = ({
       </Button>
 
       {/* Product image */}
-      <div className="aspect-square overflow-hidden">
+      <div className="aspect-square overflow-hidden bg-muted">
         <img
           src={image}
           alt={title}
           className="h-full w-full object-cover transition-transform group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
         />
       </div>
 
