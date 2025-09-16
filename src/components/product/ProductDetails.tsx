@@ -30,7 +30,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
   
   const images = product.images && product.images.length > 0 
     ? product.images 
-    : ["https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=600&h=600&fit=crop"];
+    : ["https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=600&h=600&fit=crop&q=80"];
   
   const discount = product.mrp !== product.selling_price ? 
     Math.round(((product.mrp - product.selling_price) / product.mrp) * 100) : 0;
@@ -79,6 +79,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
             className="h-full w-full object-cover rounded-lg"
             skeletonClassName="aspect-square rounded-lg"
             priority={true}
+            optimizeSize={{ width: 600, height: 600, quality: 85 }}
             sizes="(max-width: 1024px) 100vw, 50vw"
           />
         </div>
@@ -100,6 +101,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
                   alt={`${product.title} ${index + 1}`}
                   className="h-full w-full object-cover"
                   skeletonClassName="w-16 h-16"
+                  optimizeSize={{ width: 80, height: 80, quality: 70 }}
                   sizes="64px"
                 />
               </button>

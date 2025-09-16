@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getOptimizedImageUrl, getImageSrcSet } from "@/utils/imageOptimization";
 
-interface ImageWithSkeletonProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+interface ImageWithSkeletonProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'src'> {
   src: string;
   alt: string;
   className?: string;
   skeletonClassName?: string;
   priority?: boolean;
+  optimizeSize?: { width: number; height?: number; quality?: number };
 }
 
 export const ImageWithSkeleton = ({ 
@@ -16,10 +18,17 @@ export const ImageWithSkeleton = ({
   className, 
   skeletonClassName, 
   priority = false,
+  optimizeSize,
   ...props 
 }: ImageWithSkeletonProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+
+  const optimizedSrc = optimizeSize 
+    ? getOptimizedImageUrl(src, optimizeSize.width, optimizeSize.height, optimizeSize.quality)
+    : src;
+
+  const srcSet = getImageSrcSet(src);
 
   return (
     <div className="relative overflow-hidden">
@@ -27,7 +36,8 @@ export const ImageWithSkeleton = ({
         <Skeleton className={cn("absolute inset-0", skeletonClassName)} />
       )}
       <img
-        src={src}
+        src={optimizedSrc}
+        srcSet={srcSet}
         alt={alt}
         className={cn(
           "transition-opacity duration-300",

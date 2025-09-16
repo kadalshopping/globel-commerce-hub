@@ -10,7 +10,7 @@ export const FeaturedProducts = () => {
     title: product.title,
     price: product.selling_price,
     originalPrice: product.mrp !== product.selling_price ? product.mrp : undefined,
-    image: product.images?.[0] || "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=400&h=400&fit=crop",
+    image: product.images?.[0] || "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=300&h=300&fit=crop&q=75",
     discount: product.mrp !== product.selling_price ? 
       Math.round(((product.mrp - product.selling_price) / product.mrp) * 100) : undefined,
     stockQuantity: product.stock_quantity || 0,
