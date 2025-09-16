@@ -12,6 +12,9 @@ import { Product } from "@/types/product";
 import { useProductRating } from "@/hooks/useReviews";
 import { ReviewSection } from "./ReviewSection";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
+import { SEOHead } from "@/components/seo/SEOHead";
+import { generateProductSchema, generateBreadcrumbSchema } from "@/utils/structuredData";
+import { useSEO } from "@/hooks/useSEO";
 
 interface ProductDetailsProps {
   product: Product;
@@ -27,6 +30,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: rating } = useProductRating(product.id);
+  const { trackProductView, trackAddToCart } = useSEO();
   
   const images = product.images && product.images.length > 0 
     ? product.images 
@@ -34,6 +38,32 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
   
   const discount = product.mrp !== product.selling_price ? 
     Math.round(((product.mrp - product.selling_price) / product.mrp) * 100) : 0;
+
+  // Track product view
+  useState(() => {
+    trackProductView(product.id, product.title, product.category);
+  });
+
+  // Generate SEO data
+  const productSchema = generateProductSchema(product);
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: product.category || "Products", url: `/category/${product.category || 'all'}` },
+    { name: product.title, url: `/product/${product.id}` }
+  ]);
+
+  const seoDescription = product.description || 
+    `Buy ${product.title} for ₹${product.selling_price.toLocaleString('en-IN')}. ${product.brand ? `${product.brand} brand. ` : ''}${discount > 0 ? `${discount}% off. ` : ''}Free delivery available.`;
+  
+  const seoKeywords = [
+    product.title,
+    product.brand,
+    product.category,
+    'online shopping',
+    'buy online',
+    'fast delivery',
+    ...(product.tags || [])
+  ].filter(Boolean).join(', ');
   
   const handleAddToCart = () => {
     if (!user) {
@@ -61,6 +91,9 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
       });
     }
 
+    // Track add to cart event
+    trackAddToCart(product.id, product.title, product.selling_price * quantity);
+
     toast({
       title: "Added to Cart",
       description: `${quantity} item(s) added to your cart`,
@@ -69,6 +102,14 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
 
   return (
     <>
+      <SEOHead 
+        title={product.title}
+        description={seoDescription}
+        ogType="product"
+        ogImage={images[0]}
+        keywords={seoKeywords}
+        schema={[productSchema, breadcrumbSchema]}
+      />
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
       {/* Product Images */}
       <div className="space-y-4">
