@@ -1,5 +1,6 @@
 import { ProductCard } from "@/components/product/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
+import { getResponsiveImageSources } from "@/utils/imageOptimization";
 
 interface SimilarProductsProps {
   currentProductId: string;
@@ -22,7 +23,7 @@ export const SimilarProducts = ({ currentProductId, category }: SimilarProductsP
       title: product.title,
       price: product.selling_price,
       originalPrice: product.mrp !== product.selling_price ? product.mrp : undefined,
-      image: product.images?.[0] || "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=400&h=400&fit=crop",
+      image: product.images?.[0] ? getResponsiveImageSources(product.images[0]).thumbnail : "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=150&h=150&fit=crop&q=60",
       rating: 4.5, // Default rating
       reviewCount: Math.floor(Math.random() * 1000) + 100, // Random review count for demo
       discount: product.mrp !== product.selling_price ? 

@@ -24,11 +24,11 @@ export const getOptimizedImageUrl = (
 
 export const getResponsiveImageSources = (baseUrl: string) => {
   return {
-    icon: getOptimizedImageUrl(baseUrl, 64, 64, 60),
-    thumbnail: getOptimizedImageUrl(baseUrl, 200, 200, 70),
-    small: getOptimizedImageUrl(baseUrl, 400, 400, 75),
-    medium: getOptimizedImageUrl(baseUrl, 600, 600, 80),
-    large: getOptimizedImageUrl(baseUrl, 800, 800, 85),
+    icon: getOptimizedImageUrl(baseUrl, 64, 64, 50),
+    thumbnail: getOptimizedImageUrl(baseUrl, 150, 150, 60),
+    small: getOptimizedImageUrl(baseUrl, 300, 300, 65),
+    medium: getOptimizedImageUrl(baseUrl, 500, 500, 70),
+    large: getOptimizedImageUrl(baseUrl, 700, 700, 75),
     hero: getOptimizedImageUrl(baseUrl, 1200, 600, 80),
   };
 };
