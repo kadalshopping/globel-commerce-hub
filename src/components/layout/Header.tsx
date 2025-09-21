@@ -16,6 +16,7 @@ import {
   LogOut
 } from "lucide-react";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
+import googlePlayBadge from "@/assets/google-play-badge.png";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
@@ -45,6 +46,18 @@ export const Header = () => {
           <div className="flex items-center gap-4">
             <span className="hidden md:inline">Sell on MarketPlace</span>
             <span>Help & Support</span>
+            <a 
+              href="https://play.google.com/store/apps/details?id=com.kadal.shop"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <img
+                src={googlePlayBadge}
+                alt="Get it on Google Play"
+                className="h-8 w-auto"
+              />
+            </a>
           </div>
         </div>
       </div>
