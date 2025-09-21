@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
+import googlePlayBadge from '@/assets/google-play-badge.png';
 
 export const Footer = () => {
   return (
     <footer className="bg-muted mt-auto">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -53,6 +54,28 @@ export const Footer = () => {
               <li><a href="#" className="text-muted-foreground hover:text-primary">Cookie Policy</a></li>
               <li><a href="#" className="text-muted-foreground hover:text-primary">Seller Agreement</a></li>
             </ul>
+          </div>
+
+          {/* Mobile App */}
+          <div>
+            <h3 className="font-semibold mb-4">Get Our App</h3>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Download our mobile app for a better shopping experience
+              </p>
+              <a 
+                href="https://play.google.com/store/apps/details?id=com.kadal.shop"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block hover:opacity-80 transition-opacity"
+              >
+                <img
+                  src={googlePlayBadge}
+                  alt="Get it on Google Play"
+                  className="h-12 w-auto"
+                />
+              </a>
+            </div>
           </div>
         </div>
 
