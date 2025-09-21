@@ -25,27 +25,34 @@ export const ImageWithSkeleton = ({
   const [hasError, setHasError] = useState(false);
 
   const optimizedSrc = optimizeSize 
-    ? getOptimizedImageUrl(src, optimizeSize.width, optimizeSize.height, optimizeSize.quality)
+    ? getOptimizedImageUrl(src, optimizeSize.width, optimizeSize.height, optimizeSize.quality || 50)
     : src;
 
   const srcSet = getImageSrcSet(src);
+
+  // Preload critical images for faster loading
+  const shouldPreload = priority || (optimizeSize && optimizeSize.width <= 100);
 
   return (
     <div className="relative overflow-hidden">
       {!isLoaded && !hasError && (
         <Skeleton className={cn("absolute inset-0", skeletonClassName)} />
       )}
+      {shouldPreload && (
+        <link rel="preload" as="image" href={optimizedSrc} />
+      )}
       <img
         src={optimizedSrc}
         srcSet={srcSet}
         alt={alt}
         className={cn(
-          "transition-opacity duration-300",
+          "transition-opacity duration-200", // Faster transition
           isLoaded ? "opacity-100" : "opacity-0",
           className
         )}
-        loading={priority ? "eager" : "lazy"}
+        loading={shouldPreload ? "eager" : "lazy"}
         decoding="async"
+        fetchPriority={shouldPreload ? "high" : "low"}
         onLoad={() => setIsLoaded(true)}
         onError={() => setHasError(true)}
         {...props}

@@ -89,9 +89,9 @@ export const ProductCard = ({
           alt={title}
           className="h-full w-full object-cover transition-transform group-hover:scale-105"
           skeletonClassName="aspect-square"
-          optimizeSize={{ width: 200, height: 200, quality: 60 }}
-          sizes="(max-width: 640px) 150px, (max-width: 1024px) 200px, 250px"
-          priority={false}
+          optimizeSize={{ width: 120, height: 120, quality: 40 }}
+          sizes="(max-width: 640px) 120px, (max-width: 1024px) 150px, 200px"
+          priority={true}
         />
       </div>
 
