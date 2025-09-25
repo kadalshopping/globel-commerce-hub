@@ -39,21 +39,21 @@ export const getOptimizedImageUrl = (
 
 export const getResponsiveImageSources = (baseUrl: string) => {
   return {
-    icon: getOptimizedImageUrl(baseUrl, 48, 48, 40), // Smaller and lower quality for speed
-    thumbnail: getOptimizedImageUrl(baseUrl, 120, 120, 45), // Reduced size for faster load
-    small: getOptimizedImageUrl(baseUrl, 200, 200, 50), // Smaller for mobile speed
-    medium: getOptimizedImageUrl(baseUrl, 350, 350, 60),
-    large: getOptimizedImageUrl(baseUrl, 500, 500, 65),
-    hero: getOptimizedImageUrl(baseUrl, 1200, 600, 75),
+    icon: getOptimizedImageUrl(baseUrl, 32, 32, 30), // Ultra-small for instant loading
+    thumbnail: getOptimizedImageUrl(baseUrl, 80, 80, 35), // Much smaller for speed
+    small: getOptimizedImageUrl(baseUrl, 150, 150, 40), // Reduced for mobile
+    medium: getOptimizedImageUrl(baseUrl, 250, 250, 45), // Smaller medium size
+    large: getOptimizedImageUrl(baseUrl, 400, 400, 50), // Reduced large size
+    hero: getOptimizedImageUrl(baseUrl, 800, 400, 60), // Smaller hero images
   };
 };
 
 // Fast loading preset for product icons
 export const getFastIconUrl = (baseUrl: string) => {
-  return getOptimizedImageUrl(baseUrl, 48, 48, 35); // Ultra-small, ultra-fast
+  return getOptimizedImageUrl(baseUrl, 32, 32, 25); // Tiny size, maximum speed
 };
 
 export const getImageSrcSet = (baseUrl: string) => {
   const sources = getResponsiveImageSources(baseUrl);
-  return `${sources.small} 400w, ${sources.medium} 600w, ${sources.large} 800w`;
+  return `${sources.small} 300w, ${sources.medium} 500w, ${sources.large} 700w`;
 };

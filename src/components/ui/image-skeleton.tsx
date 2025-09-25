@@ -25,13 +25,13 @@ export const ImageWithSkeleton = ({
   const [hasError, setHasError] = useState(false);
 
   const optimizedSrc = optimizeSize 
-    ? getOptimizedImageUrl(src, optimizeSize.width, optimizeSize.height, optimizeSize.quality || 50)
+    ? getOptimizedImageUrl(src, optimizeSize.width, optimizeSize.height, optimizeSize.quality || 35)
     : src;
 
   const srcSet = getImageSrcSet(src);
 
   // Preload critical images for faster loading
-  const shouldPreload = priority || (optimizeSize && optimizeSize.width <= 100);
+  const shouldPreload = priority || (optimizeSize && optimizeSize.width <= 80);
 
   return (
     <div className="relative overflow-hidden">

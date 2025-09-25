@@ -1,17 +1,17 @@
 import { Button } from "@/components/ui/button";
+import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import heroImage from "@/assets/hero-banner.jpg";
 
 export const HeroSection = () => {
   return (
     <section className="relative h-64 sm:h-80 md:h-96 bg-gradient-hero overflow-hidden">
       <div className="absolute inset-0">
-        <img
+        <ImageWithSkeleton
           src={heroImage}
           alt="Shop thousands of products"
           className="w-full h-full object-cover opacity-20"
-          loading="eager"
-          decoding="async"
-          sizes="100vw"
+          priority={true}
+          optimizeSize={{ width: 800, height: 400, quality: 60 }}
         />
       </div>
       
