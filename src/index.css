@@ -124,6 +124,38 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Mobile optimizations */
+  .mobile-optimized {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  .mobile-optimized input,
+  .mobile-optimized textarea,
+  .mobile-optimized select {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+
+  /* Mobile-friendly touch targets */
+  @media (max-width: 768px) {
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Mobile viewport height fix */
+  .mobile-vh {
+    height: calc(var(--mobile-vh, 1vh) * 100);
+  }
 }
 
 @layer utilities {
