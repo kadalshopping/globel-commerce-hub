@@ -13,6 +13,7 @@ import { SEOHead } from "@/components/seo/SEOHead";
 import { generateProductSchema, generateBreadcrumbSchema } from "@/utils/structuredData";
 import { useSEO } from "@/hooks/useSEO";
 import { BuyNowButton } from "./BuyNowButton";
+import { useTrackProductView } from "@/hooks/useRecentlyViewed";
 
 interface ProductDetailsProps {
   product: Product;
@@ -26,6 +27,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
   const navigate = useNavigate();
   const { data: rating } = useProductRating(product.id);
   const { trackProductView } = useSEO();
+  const { trackView } = useTrackProductView();
   
   const images = product.images && product.images.length > 0 
     ? product.images 
@@ -37,6 +39,8 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
   // Track product view
   useState(() => {
     trackProductView(product.id, product.title, product.category);
+    // Also track for recently viewed
+    trackView(product);
   });
 
   // Generate SEO data

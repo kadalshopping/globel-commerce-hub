@@ -8,9 +8,10 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CreditCard } from "lucide-react";
+import { OrderActionButtons } from "./OrderActionButtons";
 
 export const UserOrderHistory = () => {
-  const { data: orders, isLoading } = useUserOrders();
+  const { data: orders, isLoading, refetch } = useUserOrders();
   const { addToCart } = useCart();
   const { toast } = useToast();
 
@@ -296,14 +297,20 @@ export const UserOrderHistory = () => {
                         )}
                       </div>
                     )}
-                    <Button 
-                      onClick={() => handleReorder(order)}
-                      className="w-full"
-                      variant="outline"
-                    >
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      Reorder Items
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <OrderActionButtons 
+                        order={order}
+                        onOrderUpdate={() => refetch()}
+                      />
+                      <Button 
+                        onClick={() => handleReorder(order)}
+                        className="w-full"
+                        variant="outline"
+                      >
+                        <ShoppingCart className="w-4 w-4 mr-2" />
+                        Reorder Items
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
