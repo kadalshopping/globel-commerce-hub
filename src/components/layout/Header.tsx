@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { CartDrawer } from "@/components/cart/CartDrawer";
+// import { CartDrawer } from "@/components/cart/CartDrawer"; // Disabled cart functionality
 import { 
   Search, 
   User, 
@@ -147,7 +147,7 @@ export const Header = () => {
               </Button>
             )}
 
-            <CartDrawer />
+            {/* <CartDrawer /> */} {/* Disabled cart - using direct buy now */}
 
             <Button variant="ghost" size="icon" className="md:hidden">
               <Menu className="h-4 w-4 sm:h-5 sm:w-5" />

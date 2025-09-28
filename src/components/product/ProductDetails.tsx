@@ -1,13 +1,10 @@
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Star, Heart, ShoppingCart, Minus, Plus, Package, Truck, Shield, RotateCcw } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Star, Heart, Minus, Plus, Package, Truck, Shield, RotateCcw } from "lucide-react";
 import { Product } from "@/types/product";
 import { useProductRating } from "@/hooks/useReviews";
 import { ReviewSection } from "./ReviewSection";
@@ -15,6 +12,7 @@ import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { generateProductSchema, generateBreadcrumbSchema } from "@/utils/structuredData";
 import { useSEO } from "@/hooks/useSEO";
+import { BuyNowButton } from "./BuyNowButton";
 
 interface ProductDetailsProps {
   product: Product;
@@ -25,12 +23,9 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   
-  const { user } = useAuth();
-  const { addToCart } = useCart();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { data: rating } = useProductRating(product.id);
-  const { trackProductView, trackAddToCart } = useSEO();
+  const { trackProductView } = useSEO();
   
   const images = product.images && product.images.length > 0 
     ? product.images 
@@ -65,40 +60,6 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
     ...(product.tags || [])
   ].filter(Boolean).join(', ');
   
-  const handleAddToCart = () => {
-    if (!user) {
-      navigate('/auth?redirect=' + encodeURIComponent(window.location.pathname));
-      return;
-    }
-    
-    if (!product.stock_quantity || product.stock_quantity <= 0) {
-      toast({
-        title: "Out of Stock",
-        description: "This item is currently out of stock.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    for (let i = 0; i < quantity; i++) {
-      addToCart({
-        id: `cart_${product.id}_${Date.now()}_${i}`,
-        productId: product.id,
-        title: product.title,
-        price: product.selling_price,
-        image: images[0],
-        maxStock: product.stock_quantity || 0,
-      });
-    }
-
-    // Track add to cart event
-    trackAddToCart(product.id, product.title, product.selling_price * quantity);
-
-    toast({
-      title: "Added to Cart",
-      description: `${quantity} item(s) added to your cart`,
-    });
-  };
 
   return (
     <>
@@ -260,14 +221,18 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          <Button 
-            onClick={handleAddToCart}
-            disabled={!product.stock_quantity || product.stock_quantity <= 0}
-            className="flex-1"
-          >
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            Add to Cart
-          </Button>
+          <BuyNowButton
+            product={{
+              id: product.id,
+              title: product.title,
+              selling_price: product.selling_price,
+              stock_quantity: product.stock_quantity,
+              image: images[0],
+              shop_owner_id: product.shop_owner_id,
+            }}
+            quantity={quantity}
+            className="flex-1 h-12"
+          />
           <Button
             variant="outline"
             size="icon"

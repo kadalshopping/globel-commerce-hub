@@ -1,13 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Heart, ShoppingCart } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Star, Heart, ShoppingBag } from "lucide-react";
 import { useProductRating } from "@/hooks/useReviews";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
+import { BuyNowButton } from "./BuyNowButton";
 
 interface ProductCardProps {
   id: string;
@@ -30,36 +28,8 @@ export const ProductCard = ({
   isWishlisted = false,
   stockQuantity = 0,
 }: ProductCardProps) => {
-  const { user } = useAuth();
-  const { addToCart } = useCart();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { data: rating } = useProductRating(id);
-
-  const handleAddToCart = () => {
-    if (!user) {
-      navigate('/auth?redirect=' + encodeURIComponent(window.location.pathname));
-      return;
-    }
-    
-    if (stockQuantity <= 0) {
-      toast({
-        title: "Out of Stock",
-        description: "This item is currently out of stock.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    addToCart({
-      id: `cart_${id}`,
-      productId: id,
-      title,
-      price,
-      image,
-      maxStock: stockQuantity,
-    });
-  };
   const handleCardClick = () => {
     navigate(`/product/${id}`);
   };
@@ -130,18 +100,18 @@ export const ProductCard = ({
           )}
         </div>
 
-        {/* Add to cart button */}
-        <Button 
-          variant="cart" 
-          className="w-full text-xs sm:text-sm h-8 sm:h-10" 
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAddToCart();
+        {/* Buy now button */}
+        <BuyNowButton
+          product={{
+            id,
+            title,
+            selling_price: price,
+            stock_quantity: stockQuantity,
+            image,
+            shop_owner_id: undefined, // This will need to be fetched from full product data
           }}
-        >
-          <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-          Add to Cart
-        </Button>
+          className="w-full text-xs sm:text-sm h-8 sm:h-10"
+        />
       </div>
     </Card>
   );
