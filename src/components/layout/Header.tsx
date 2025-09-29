@@ -13,7 +13,9 @@ import {
   Menu,
   Heart,
   Bell,
-  LogOut
+  LogOut,
+  MessageCircle,
+  Phone
 } from "lucide-react";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import googlePlayBadge from "@/assets/google-play-badge.png";
@@ -44,8 +46,31 @@ export const Header = () => {
         <div className="container mx-auto flex items-center justify-between text-sm text-primary-foreground">
           <div>Free shipping on orders over ₹499</div>
           <div className="flex items-center gap-4">
-            <span className="hidden md:inline">Sell on MarketPlace</span>
-            <span>Help & Support</span>
+            <a 
+              href="https://wa.me/918056821111?text=Hi%2C%20I%20want%20to%20sell%20on%20your%20marketplace.%20Please%20help%20me%20get%20started."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden md:flex items-center gap-1 hover:text-primary-foreground/80 transition-colors"
+            >
+              <MessageCircle className="h-3 w-3" />
+              Sell on MarketPlace
+            </a>
+            <a 
+              href="https://wa.me/918056821111?text=Hi%2C%20I%20need%20help%20with%20my%20order%20or%20have%20a%20question."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 hover:text-primary-foreground/80 transition-colors"
+            >
+              <MessageCircle className="h-3 w-3" />
+              Help & Support
+            </a>
+            <a 
+              href="tel:+918056821111"
+              className="hidden sm:flex items-center gap-1 hover:text-primary-foreground/80 transition-colors"
+            >
+              <Phone className="h-3 w-3" />
+              +91 80568 21111
+            </a>
             <a 
               href="https://play.google.com/store/apps/details?id=com.kadal.shop"
               target="_blank"
