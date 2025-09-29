@@ -11,6 +11,19 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // PAUSED: Admin account creation is currently disabled
+  return new Response(
+    JSON.stringify({ 
+      error: 'Admin account creation is currently paused',
+      message: 'New admin account creation has been temporarily disabled by the system administrator.'
+    }),
+    {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 503, // Service Unavailable
+    }
+  )
+
+  /* ORIGINAL CODE - COMMENTED OUT FOR PAUSE
   try {
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -136,4 +149,7 @@ serve(async (req) => {
       }
     )
   }
+   */
+
+   /* COMMENTED OUT CODE CONTINUES HERE - TO RE-ENABLE, REMOVE THE PAUSE BLOCK ABOVE AND UNCOMMENT THIS SECTION */
 })
