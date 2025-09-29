@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, Clock, AlertTriangle, ShoppingBag, Database, UserPlus, Store, ImageIcon } from 'lucide-react';
+import { Package, Clock, AlertTriangle, ShoppingBag, Database, UserPlus, Store, ImageIcon, Users } from 'lucide-react';
 import { useMigrateCompletedOrders } from '@/hooks/useOrderMigration';
 import { HeaderImageManagement } from '@/components/admin/HeaderImageManagement';
+import { UserManagement } from '@/components/admin/UserManagement';
 
 const AdminDashboard = () => {
   const { data: pendingProducts = [], isLoading, error } = usePendingProducts();
@@ -61,12 +62,16 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="products" className="space-y-4">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="products">Product Approvals</TabsTrigger>
             <TabsTrigger value="orders">Order Management</TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Users
+            </TabsTrigger>
             <TabsTrigger value="shop-orders" className="flex items-center gap-2">
               <Store className="h-4 w-4" />
-              Shop Owner Orders
+              Shop Orders
             </TabsTrigger>
             <TabsTrigger value="accounts" className="flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
@@ -104,6 +109,10 @@ const AdminDashboard = () => {
           
           <TabsContent value="orders" className="space-y-4">
             <AdminOrderManagement />
+          </TabsContent>
+          
+          <TabsContent value="users" className="space-y-4">
+            <UserManagement />
           </TabsContent>
           
           <TabsContent value="shop-orders" className="space-y-4">
