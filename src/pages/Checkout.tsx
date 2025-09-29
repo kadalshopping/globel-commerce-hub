@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,9 @@ import {
   ArrowLeft,
   Truck,
   Shield,
-  CheckCircle
+  CheckCircle,
+  Clock,
+  Zap
 } from "lucide-react";
 import { calculatePriceBreakdown } from "@/utils/priceCalculations";
 import { SEOHead } from "@/components/seo/SEOHead";
@@ -58,6 +61,7 @@ const Checkout = () => {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showCodPrompt, setShowCodPrompt] = useState(false);
 
   // Get product data from URL params
   useEffect(() => {
@@ -172,6 +176,16 @@ const Checkout = () => {
       return;
     }
 
+    // Show prompt for COD orders to encourage online payment
+    if (paymentMethod === 'cod') {
+      setShowCodPrompt(true);
+      return;
+    }
+
+    await processOrder();
+  };
+
+  const processOrder = async () => {
     setIsProcessing(true);
 
     try {
@@ -226,8 +240,8 @@ const Checkout = () => {
         if (stockError) throw stockError;
 
         toast({
-          title: "Order Placed Successfully!",
-          description: `Your order ${order.order_number} has been placed with Cash on Delivery.`,
+          title: "COD Order Placed!",
+          description: `Your order ${order.order_number} has been placed with Cash on Delivery. Processing may take longer.`,
         });
 
         navigate('/orders');
@@ -258,6 +272,16 @@ const Checkout = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleContinueWithCod = async () => {
+    setShowCodPrompt(false);
+    await processOrder();
+  };
+
+  const handleSwitchToOnline = () => {
+    setShowCodPrompt(false);
+    setPaymentMethod('online');
   };
 
   return (
@@ -486,6 +510,60 @@ const Checkout = () => {
             </div>
           </div>
         </div>
+
+        {/* COD Payment Prompt Dialog */}
+        <Dialog open={showCodPrompt} onOpenChange={setShowCodPrompt}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-yellow-500" />
+                Get Your Order Faster!
+              </DialogTitle>
+              <DialogDescription>
+                Complete payment now to get your order processed and delivered faster than COD.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="bg-green-50 p-4 rounded-lg">
+                <h4 className="font-medium text-green-800 mb-2 flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Online Payment Benefits:
+                </h4>
+                <ul className="text-sm text-green-700 space-y-1">
+                  <li>• Faster order processing</li>
+                  <li>• Priority shipping</li>
+                  <li>• Immediate order confirmation</li>
+                  <li>• Better delivery tracking</li>
+                </ul>
+              </div>
+              
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <h4 className="font-medium text-orange-800 mb-2">Cash on Delivery:</h4>
+                <p className="text-sm text-orange-700">
+                  Your order will be placed but may take longer to process and ship.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button 
+                  onClick={handleSwitchToOnline}
+                  className="flex-1"
+                >
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Pay Now (Faster)
+                </Button>
+                <Button 
+                  onClick={handleContinueWithCod}
+                  variant="outline"
+                  disabled={isProcessing}
+                >
+                  <Banknote className="h-4 w-4 mr-2" />
+                  {isProcessing ? 'Processing...' : 'Continue COD'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
