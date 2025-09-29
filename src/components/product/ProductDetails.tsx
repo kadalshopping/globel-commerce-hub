@@ -210,28 +210,116 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
           </div>
         </div>
 
-        {/* Price */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl font-bold text-primary">
-              ₹{product.selling_price.toLocaleString('en-IN')}
-            </span>
-            {product.mrp !== product.selling_price && (
-              <span className="text-lg text-muted-foreground line-through">
-                ₹{product.mrp.toLocaleString('en-IN')}
-              </span>
-            )}
-            {discount > 0 && (
-              <Badge className="bg-destructive text-destructive-foreground">
-                -{discount}%
-              </Badge>
+        {/* Product Images Gallery */}
+        <div className="space-y-4">
+          <h3 className="font-semibold text-sm">Product Gallery</h3>
+          <div className="relative">
+            <div className="aspect-video overflow-hidden rounded-lg bg-muted group shadow-md">
+              <ImageWithSkeleton
+                src={images[selectedImageIndex]}
+                alt={`${product.title} gallery ${selectedImageIndex + 1}`}
+                className="h-full w-full object-cover rounded-lg transition-all duration-500 group-hover:scale-105"
+                skeletonClassName="aspect-video rounded-lg"
+                optimizeSize={{ width: 500, height: 300, quality: 85 }}
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
+              
+              {/* Navigation Arrows */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setSelectedImageIndex(selectedImageIndex === 0 ? images.length - 1 : selectedImageIndex - 1)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setSelectedImageIndex(selectedImageIndex === images.length - 1 ? 0 : selectedImageIndex + 1)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+              
+              {/* Image Indicators */}
+              {images.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1.5">
+                  {images.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        selectedImageIndex === index 
+                          ? 'bg-white scale-125 shadow-sm' 
+                          : 'bg-white/60 hover:bg-white/80'
+                      }`}
+                      aria-label={`View image ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+              
+              {/* Image Counter */}
+              {images.length > 1 && (
+                <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
+                  {selectedImageIndex + 1} / {images.length}
+                </div>
+              )}
+            </div>
+            
+            {/* Thumbnail Strip */}
+            {images.length > 1 && (
+              <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">
+                {images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-all duration-300 hover:scale-105 hover:shadow-md ${
+                      selectedImageIndex === index 
+                        ? 'border-primary shadow-lg ring-2 ring-primary/20' 
+                        : 'border-muted hover:border-muted-foreground'
+                    }`}
+                  >
+                    <ImageWithSkeleton
+                      src={image}
+                      alt={`${product.title} ${index + 1}`}
+                      className="h-full w-full object-cover"
+                      skeletonClassName="w-16 h-16"
+                      optimizeSize={{ width: 64, height: 64, quality: 70 }}
+                      sizes="64px"
+                    />
+                  </button>
+                ))}
+              </div>
             )}
           </div>
-          {discount > 0 && (
-            <p className="text-sm text-green-600">
-              You save ₹{(product.mrp - product.selling_price).toLocaleString('en-IN')}
-            </p>
-          )}
+          
+          {/* Price moved here below images */}
+          <div className="space-y-2 pt-4 border-t">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl font-bold text-primary">
+                ₹{product.selling_price.toLocaleString('en-IN')}
+              </span>
+              {product.mrp !== product.selling_price && (
+                <span className="text-lg text-muted-foreground line-through">
+                  ₹{product.mrp.toLocaleString('en-IN')}
+                </span>
+              )}
+              {discount > 0 && (
+                <Badge className="bg-destructive text-destructive-foreground">
+                  -{discount}%
+                </Badge>
+              )}
+            </div>
+            {discount > 0 && (
+              <p className="text-sm text-green-600">
+                You save ₹{(product.mrp - product.selling_price).toLocaleString('en-IN')}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Description */}
