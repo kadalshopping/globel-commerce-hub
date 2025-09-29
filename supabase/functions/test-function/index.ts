@@ -53,10 +53,11 @@ Deno.serve(async (req) => {
     console.error(`=== TEST FUNCTION ERROR [${requestId}] ===`);
     console.error('Error details:', error);
 
+    const err = error as Error;
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Test function error',
+        error: err.message || 'Test function error',
         requestId,
         timestamp: new Date().toISOString()
       }),

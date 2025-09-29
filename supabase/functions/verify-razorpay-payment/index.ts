@@ -212,7 +212,8 @@ serve(async (req) => {
         }
       } catch (itemProcessingError) {
         console.error(`❌ Error processing item ${item.productId}:`, itemProcessingError);
-        itemResults.push({ productId: item.productId, success: false, error: itemProcessingError.message });
+        const err = itemProcessingError as Error;
+        itemResults.push({ productId: item.productId, success: false, error: err.message || 'Unknown error' });
       }
     }
 
@@ -242,8 +243,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Error verifying payment:', error);
+    const err = error as Error;
     return new Response(JSON.stringify({
-      error: error.message,
+      error: err.message || 'Unknown error occurred',
       success: false
     }), {
       status: 500,

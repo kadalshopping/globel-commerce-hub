@@ -140,9 +140,10 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("❌ Edge function error:", error);
-    console.error("📜 Error stack:", error.stack);
+    const err = error as Error;
+    console.error("📜 Error stack:", err.stack || 'No stack trace');
     return new Response(JSON.stringify({ 
-      error: error.message || "Failed to create Razorpay order",
+      error: err.message || "Failed to create Razorpay order",
       success: false 
     }), {
       status: 500,

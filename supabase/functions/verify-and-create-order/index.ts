@@ -385,10 +385,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error(`=== VERIFY AND CREATE ORDER ERROR [${requestId}] ===`);
+    const err = error as Error;
     console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
+      name: err.name || 'Error',
+      message: err.message || 'Unknown error',
+      stack: err.stack || 'No stack trace'
     });
     
     return new Response(

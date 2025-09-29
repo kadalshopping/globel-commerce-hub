@@ -172,8 +172,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Error verifying payment link:', error);
+    const err = error as Error;
     return new Response(JSON.stringify({
-      error: error.message,
+      error: err.message || 'Unknown error occurred',
       success: false
     }), {
       status: 500,

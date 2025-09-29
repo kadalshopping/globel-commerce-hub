@@ -209,28 +209,29 @@ serve(async (req) => {
   } catch (error) {
     console.error('❌ Error creating payment link:', error);
     
+    const err = error as Error;
     // Enhanced error logging
     const errorDetails = {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
+      message: err.message || 'Unknown error',
+      stack: err.stack || 'No stack trace',
+      name: err.name || 'Error',
       timestamp: new Date().toISOString()
     };
     
     console.error('📋 Detailed error information:', JSON.stringify(errorDetails, null, 2));
     
     // Check if it's a Razorpay API error
-    if (error.message.includes('Razorpay')) {
+    if (err.message && err.message.includes('Razorpay')) {
       console.error('🔑 Razorpay API issue detected - check credentials and API call');
     }
     
     return new Response(JSON.stringify({
-      error: error.message,
+      error: err.message || 'Unknown error occurred',
       success: false,
       debug: {
         timestamp: new Date().toISOString(),
         function: 'create-payment-link',
-        errorType: error.name
+        errorType: err.name || 'Error'
       }
     }), {
       status: 500,
