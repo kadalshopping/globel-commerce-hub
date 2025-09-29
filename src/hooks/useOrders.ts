@@ -121,6 +121,7 @@ export const useAllOrderItems = () => {
   return useQuery({
     queryKey: ['all-order-items'],
     queryFn: async () => {
+      console.log('Fetching all order items...');
       const { data, error } = await supabase
         .from('order_items')
         .select(`
@@ -131,9 +132,13 @@ export const useAllOrderItems = () => {
         `)
         .order('created_at', { ascending: false });
       
+      console.log('Order items query result:', { data, error });
       if (error) throw error;
       return data as OrderItem[];
     },
+    staleTime: 0, // Force fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 };
 

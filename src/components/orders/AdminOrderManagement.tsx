@@ -10,13 +10,21 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export const AdminOrderManagement = () => {
-  const { data: orderItems, isLoading } = useAllOrderItems();
+  const { data: orderItems, isLoading, error } = useAllOrderItems();
   const approveDispatch = useApproveDispatch();
   const markDelivered = useMarkDelivered();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
+  console.log('AdminOrderManagement - orderItems:', orderItems);
+  console.log('AdminOrderManagement - isLoading:', isLoading);
+  console.log('AdminOrderManagement - error:', error);
+
   if (isLoading) {
     return <div className="p-6">Loading orders...</div>;
+  }
+
+  if (error) {
+    return <div className="p-6">Error loading orders: {error.message}</div>;
   }
 
   const waitingItems = orderItems?.filter(item => item.status === 'waiting_for_dispatch') || [];
