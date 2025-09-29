@@ -5,6 +5,7 @@ import { SlidingHeroSection } from "@/components/home/SlidingHeroSection";
 import { AdminProductManagement } from "@/components/admin/AdminProductManagement";
 import { RecentlyViewedSection } from "@/components/home/RecentlyViewedSection";
 import { TopDealsSection } from "@/components/home/TopDealsSection";
+import { CategoryProducts } from "@/components/home/CategoryProducts";
 import { useAuth } from "@/contexts/AuthContext";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { generateWebsiteSchema, generateOrganizationSchema } from "@/utils/structuredData";
@@ -31,6 +32,7 @@ const Index = () => {
         <SlidingHeroSection />
         <TopDealsSection />
         <RecentlyViewedSection />
+        <CategoryProducts />
         
         {/* Zero Fees Section */}
         <section className="py-8 bg-green-50 border-y border-green-200">

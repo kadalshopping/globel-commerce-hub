@@ -141,14 +141,14 @@ export const CategoryProducts = () => {
         </div>
 
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 mb-8">
+          <TabsList className="grid w-full auto-cols-fr mb-8" style={{ gridTemplateColumns: `repeat(${Math.min(categories.length + 1, 8)}, 1fr)` }}>
             <TabsTrigger value="all" className="flex items-center gap-2">
               All Products
               <Badge variant="secondary" className="ml-1">
                 {allProducts.length}
               </Badge>
             </TabsTrigger>
-            {categories.slice(0, 5).map((category) => (
+            {categories.map((category) => (
               <TabsTrigger key={category} value={category} className="flex items-center gap-2">
                 {category}
                 <Badge variant="secondary" className="ml-1">
