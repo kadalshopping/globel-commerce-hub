@@ -304,7 +304,7 @@ const Checkout = () => {
         throw new Error(razorpayError?.message || 'Failed to create payment order');
       }
 
-      const { razorpay_order_id, amount, currency, razorpay_key_id } = razorpayData.data;
+      const { razorpay_order_id, amount, currency, razorpay_key_id } = razorpayData;
 
       // Configure Razorpay options
       const options = {
