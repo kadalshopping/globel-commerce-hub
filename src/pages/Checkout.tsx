@@ -117,9 +117,20 @@ const Checkout = () => {
 
   const handleAddressSubmit = async (addressData: any) => {
     try {
+      // Map the form data to match the database schema
+      const dbAddressData = {
+        name: addressData.fullName, // Map fullName from form to name in database
+        address: addressData.address,
+        city: addressData.city,
+        state: addressData.state,
+        pincode: addressData.pincode,
+        phone: addressData.phone,
+        user_id: user?.id
+      };
+
       const { data, error } = await supabase
         .from('delivery_addresses')
-        .insert([{ ...addressData, user_id: user?.id }])
+        .insert([dbAddressData])
         .select()
         .single();
 
