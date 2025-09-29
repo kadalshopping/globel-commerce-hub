@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,11 +40,14 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
     Math.round(((product.mrp - product.selling_price) / product.mrp) * 100) : 0;
 
   // Track product view
-  useState(() => {
+  useEffect(() => {
+    // Scroll to top when product details load
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     trackProductView(product.id, product.title, product.category);
     // Also track for recently viewed
     trackView(product);
-  });
+  }, [product.id, product.title, product.category, trackProductView, trackView]);
 
   // Generate SEO data
   const productSchema = generateProductSchema(product);
