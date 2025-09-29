@@ -180,9 +180,9 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
 
         {/* Description */}
         {product.description && (
-          <div>
-            <h3 className="font-semibold mb-2">Description</h3>
-            <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+          <div className="space-y-2">
+            <h3 className="font-semibold text-sm">Description</h3>
+            <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">{product.description}</p>
           </div>
         )}
 

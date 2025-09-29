@@ -52,10 +52,10 @@ export const ImageWithSkeleton = ({
         )}
         loading={shouldPreload ? "eager" : "lazy"}
         decoding="async"
-        fetchPriority={shouldPreload ? "high" : "low"}
         onLoad={() => setIsLoaded(true)}
         onError={() => setHasError(true)}
         {...props}
+        {...(shouldPreload && { fetchpriority: "high" as any })}
       />
       {hasError && (
         <div className={cn("absolute inset-0 bg-muted flex items-center justify-center", skeletonClassName)}>
