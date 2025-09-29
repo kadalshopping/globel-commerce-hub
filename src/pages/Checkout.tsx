@@ -27,6 +27,13 @@ import {
 import { calculatePriceBreakdown } from "@/utils/priceCalculations";
 import { SEOHead } from "@/components/seo/SEOHead";
 
+// Razorpay types
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 interface CheckoutProduct {
   id: string;
   title: string;
@@ -184,6 +191,22 @@ const Checkout = () => {
     await processOrder();
   };
 
+  // Load Razorpay script
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const processOrder = async () => {
     setIsProcessing(true);
 
@@ -245,22 +268,8 @@ const Checkout = () => {
 
         navigate('/orders');
       } else {
-        // Handle online payment
-        const { data, error } = await supabase.functions.invoke('create-payment-link', {
-          body: {
-            amount: priceBreakdown.total,
-            cartItems: orderData.items,
-            deliveryAddress: selectedAddress,
-            priceBreakdown: priceBreakdown,
-          },
-        });
-
-        if (error) throw error;
-
-        if (data.payment_link) {
-          window.location.href = data.payment_link; // Direct navigation instead of new tab
-          return;
-        }
+        // Handle online payment with Razorpay modal
+        await handleRazorpayPayment(orderData);
       }
     } catch (error) {
       console.error('Error placing order:', error);
@@ -270,6 +279,108 @@ const Checkout = () => {
         variant: "destructive",
       });
     } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRazorpayPayment = async (orderData: any) => {
+    try {
+      // Load Razorpay script
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error('Failed to load payment gateway. Please refresh and try again.');
+      }
+
+      // Create Razorpay order
+      const { data: razorpayData, error: razorpayError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount: priceBreakdown.total,
+          cartItems: orderData.items,
+          deliveryAddress: selectedAddress,
+        },
+      });
+
+      if (razorpayError || !razorpayData?.success) {
+        throw new Error(razorpayError?.message || 'Failed to create payment order');
+      }
+
+      const { razorpay_order_id, amount, currency, razorpay_key_id } = razorpayData.data;
+
+      // Configure Razorpay options
+      const options = {
+        key: razorpay_key_id,
+        amount: amount,
+        currency: currency,
+        name: 'Your Store',
+        description: `Order ${orderData.order_number}`,
+        order_id: razorpay_order_id,
+        handler: async (response: any) => {
+          try {
+            // Verify payment
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+            });
+
+            if (verifyError || !verifyData?.success) {
+              throw new Error('Payment verification failed');
+            }
+
+            toast({
+              title: "Payment Successful!",
+              description: `Your order has been placed successfully.`,
+            });
+
+            navigate('/orders');
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            toast({
+              title: "Payment Verification Failed",
+              description: "Please contact support if money was deducted.",
+              variant: "destructive",
+            });
+          }
+        },
+        prefill: {
+          name: selectedAddress?.name || user?.user_metadata?.full_name || '',
+          email: user?.email || '',
+          contact: selectedAddress?.phone || '',
+        },
+        theme: {
+          color: '#3B82F6',
+        },
+        modal: {
+          confirm_close: true,
+          ondismiss: () => {
+            setIsProcessing(false);
+          },
+        },
+      };
+
+      const razorpay = new (window as any).Razorpay(options);
+      
+      razorpay.on('payment.failed', (response: any) => {
+        console.error('Payment failed:', response.error);
+        toast({
+          title: "Payment Failed",
+          description: response.error.description || 'Payment was not completed',
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+      });
+      
+      razorpay.open();
+
+    } catch (error) {
+      console.error('Payment initialization error:', error);
+      toast({
+        title: "Payment Failed",
+        description: error instanceof Error ? error.message : 'Failed to initialize payment',
+        variant: "destructive",
+      });
       setIsProcessing(false);
     }
   };
