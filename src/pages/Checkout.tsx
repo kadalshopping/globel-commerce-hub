@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AddressForm } from "@/components/forms/AddressForm";
@@ -225,7 +224,7 @@ const Checkout = () => {
             quantity: quantity,
             price: product.selling_price,
             shop_owner_id: product.shop_owner_id || user?.id,
-            status: 'pending',
+            status: 'waiting_for_dispatch',
           }]);
 
         if (itemsError) throw itemsError;
@@ -378,25 +377,25 @@ const Checkout = () => {
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3 p-4 border rounded-lg">
                       <RadioGroupItem value="cod" id="cod" />
-                      <Label htmlFor="cod" className="flex items-center gap-3 cursor-pointer flex-1">
+                      <label htmlFor="cod" className="flex items-center gap-3 cursor-pointer flex-1">
                         <Banknote className="h-5 w-5 text-green-600" />
                         <div>
                           <p className="font-medium">Cash on Delivery</p>
                           <p className="text-sm text-muted-foreground">Pay when you receive the item</p>
                         </div>
-                      </Label>
+                      </label>
                       <Badge variant="secondary">Recommended</Badge>
                     </div>
                     
                     <div className="flex items-center space-x-3 p-4 border rounded-lg">
                       <RadioGroupItem value="online" id="online" />
-                      <Label htmlFor="online" className="flex items-center gap-3 cursor-pointer flex-1">
+                      <label htmlFor="online" className="flex items-center gap-3 cursor-pointer flex-1">
                         <CreditCard className="h-5 w-5 text-blue-600" />
                         <div>
                           <p className="font-medium">Online Payment</p>
                           <p className="text-sm text-muted-foreground">Pay now with UPI, Card, or Net Banking</p>
                         </div>
-                      </Label>
+                      </label>
                     </div>
                   </div>
                 </RadioGroup>
