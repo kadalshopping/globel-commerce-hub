@@ -14,6 +14,7 @@ export interface Product {
   sku?: string;
   tags?: string[];
   images?: string[];
+  sizes?: string[];
   status: ProductStatus;
   admin_notes?: string;
   approved_by?: string;
@@ -37,4 +38,5 @@ export interface CreateProductData {
   sku?: string;
   tags?: string[];
   images?: string[];
+  sizes?: string[];
 }

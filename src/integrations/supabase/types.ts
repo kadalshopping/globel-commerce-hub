@@ -295,6 +295,7 @@ export type Database = {
           mrp: number
           selling_price: number
           shop_owner_id: string
+          sizes: string[] | null
           sku: string | null
           status: Database["public"]["Enums"]["product_status"]
           stock_quantity: number | null
@@ -316,6 +317,7 @@ export type Database = {
           mrp: number
           selling_price: number
           shop_owner_id: string
+          sizes?: string[] | null
           sku?: string | null
           status?: Database["public"]["Enums"]["product_status"]
           stock_quantity?: number | null
@@ -337,6 +339,7 @@ export type Database = {
           mrp?: number
           selling_price?: number
           shop_owner_id?: string
+          sizes?: string[] | null
           sku?: string | null
           status?: Database["public"]["Enums"]["product_status"]
           stock_quantity?: number | null

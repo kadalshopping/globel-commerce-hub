@@ -14,6 +14,7 @@ import { generateProductSchema, generateBreadcrumbSchema } from "@/utils/structu
 import { useSEO } from "@/hooks/useSEO";
 import { BuyNowButton } from "./BuyNowButton";
 import { useTrackProductView } from "@/hooks/useRecentlyViewed";
+import { SizeSelector } from "./SizeSelector";
 
 interface ProductDetailsProps {
   product: Product;
@@ -23,6 +24,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string>("");
   
   const navigate = useNavigate();
   const { data: rating } = useProductRating(product.id);
@@ -197,6 +199,16 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
           )}
         </div>
 
+        {/* Size Selection */}
+        {product.sizes && product.sizes.length > 0 && (
+          <SizeSelector
+            sizes={product.sizes}
+            selectedSize={selectedSize}
+            onSizeSelect={setSelectedSize}
+            className="space-y-2"
+          />
+        )}
+
         {/* Quantity Selector */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -233,8 +245,10 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
               stock_quantity: product.stock_quantity,
               image: images[0],
               shop_owner_id: product.shop_owner_id,
+              sizes: product.sizes,
             }}
             quantity={quantity}
+            selectedSize={selectedSize}
             className="flex-1 h-12"
           />
           <Button

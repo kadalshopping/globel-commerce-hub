@@ -12,13 +12,15 @@ interface BuyNowButtonProps {
     stock_quantity?: number;
     image?: string;
     shop_owner_id?: string;
+    sizes?: string[];
   };
   quantity?: number;
+  selectedSize?: string;
   className?: string;
 }
 
 
-export const BuyNowButton = ({ product, quantity = 1, className }: BuyNowButtonProps) => {
+export const BuyNowButton = ({ product, quantity = 1, selectedSize, className }: BuyNowButtonProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -26,6 +28,15 @@ export const BuyNowButton = ({ product, quantity = 1, className }: BuyNowButtonP
   const handleBuyNow = () => {
     if (!user) {
       navigate('/auth?redirect=' + encodeURIComponent(window.location.pathname));
+      return;
+    }
+    
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      toast({
+        title: "Size Required",
+        description: "Please select a size before proceeding.",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -44,6 +55,7 @@ export const BuyNowButton = ({ product, quantity = 1, className }: BuyNowButtonP
       title: product.title,
       price: product.selling_price.toString(),
       quantity: quantity.toString(),
+      ...(selectedSize && { size: selectedSize }),
       ...(product.image && { image: product.image }),
       ...(product.stock_quantity && { stock: product.stock_quantity.toString() }),
       ...(product.shop_owner_id && { shop_owner: product.shop_owner_id }),

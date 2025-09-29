@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ImageUpload } from '@/components/ui/image-upload';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Form,
   FormControl,
@@ -17,7 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useCreateProduct } from '@/hooks/useProducts';
-import { X } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 
 const productSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title must be less than 100 characters'),
@@ -39,6 +40,9 @@ export const ProductForm = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  const [sizes, setSizes] = useState<string[]>([]);
+  const [sizeInput, setSizeInput] = useState('');
+  const [sizeType, setSizeType] = useState<'clothing' | 'shoes' | 'custom'>('clothing');
   
   const createProduct = useCreateProduct();
   
@@ -67,10 +71,41 @@ export const ProductForm = () => {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
+  const addSize = () => {
+    if (sizeInput.trim() && !sizes.includes(sizeInput.trim())) {
+      setSizes([...sizes, sizeInput.trim()]);
+      setSizeInput('');
+    }
+  };
+
+  const removeSize = (sizeToRemove: string) => {
+    setSizes(sizes.filter(size => size !== sizeToRemove));
+  };
+
+  const addPredefinedSizes = (predefinedSizes: string[]) => {
+    const newSizes = predefinedSizes.filter(size => !sizes.includes(size));
+    setSizes([...sizes, ...newSizes]);
+  };
+
+  const getCommonSizes = () => {
+    switch (sizeType) {
+      case 'clothing':
+        return ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+      case 'shoes':
+        return ['6', '7', '8', '9', '10', '11', '12'];
+      default:
+        return [];
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      addTag();
+      if (e.currentTarget === document.querySelector('[data-tag-input]')) {
+        addTag();
+      } else if (e.currentTarget === document.querySelector('[data-size-input]')) {
+        addSize();
+      }
     }
   };
 
@@ -90,6 +125,7 @@ export const ProductForm = () => {
       sku: data.sku,
       tags: tags.length > 0 ? tags : undefined,
       images: images.length > 0 ? images : undefined,
+      sizes: sizes.length > 0 ? sizes : undefined,
       discount_percentage,
     });
   };
@@ -99,6 +135,9 @@ export const ProductForm = () => {
     setTags([]);
     setTagInput('');
     setImages([]);
+    setSizes([]);
+    setSizeInput('');
+    setSizeType('clothing');
   };
 
   if (createProduct.isSuccess) {
@@ -264,6 +303,7 @@ export const ProductForm = () => {
               <label className="text-sm font-medium">Tags</label>
               <div className="flex gap-2">
                 <Input
+                  data-tag-input
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -286,6 +326,67 @@ export const ProductForm = () => {
                   ))}
                 </div>
               )}
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-sm font-medium">Product Sizes</label>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Size Type</label>
+                  <Select value={sizeType} onValueChange={(value: 'clothing' | 'shoes' | 'custom') => setSizeType(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-lg z-50">
+                      <SelectItem value="clothing">Clothing (XS, S, M, L, XL)</SelectItem>
+                      <SelectItem value="shoes">Shoes (6, 7, 8, 9, 10, 11, 12)</SelectItem>
+                      <SelectItem value="custom">Custom Sizes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {sizeType !== 'custom' && (
+                  <div>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => addPredefinedSizes(getCommonSizes())}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add All {sizeType === 'clothing' ? 'Clothing' : 'Shoe'} Sizes
+                    </Button>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Input
+                    data-size-input
+                    value={sizeInput}
+                    onChange={(e) => setSizeInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder={sizeType === 'clothing' ? 'e.g., M, L, XL' : sizeType === 'shoes' ? 'e.g., 8, 9, 10' : 'Enter custom size'}
+                  />
+                  <Button type="button" onClick={addSize} variant="outline">
+                    Add Size
+                  </Button>
+                </div>
+
+                {sizes.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {sizes.map((size) => (
+                      <Badge key={size} variant="outline" className="flex items-center gap-1">
+                        {size}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => removeSize(size)}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             
             <ImageUpload

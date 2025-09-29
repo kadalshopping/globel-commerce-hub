@@ -32,6 +32,7 @@ interface CheckoutProduct {
   stock_quantity?: number;
   image?: string;
   shop_owner_id?: string;
+  selectedSize?: string;
 }
 
 interface Address {
@@ -72,6 +73,7 @@ const Checkout = () => {
     const productQuantity = searchParams.get('quantity');
     const stockQuantity = searchParams.get('stock');
     const shopOwnerId = searchParams.get('shop_owner');
+    const selectedSize = searchParams.get('size');
 
     if (!productId || !productTitle || !productPrice) {
       toast({
@@ -90,6 +92,7 @@ const Checkout = () => {
       stock_quantity: stockQuantity ? parseInt(stockQuantity) : undefined,
       image: productImage || undefined,
       shop_owner_id: shopOwnerId || undefined,
+      selectedSize: selectedSize || undefined,
     });
 
     setQuantity(productQuantity ? parseInt(productQuantity) : 1);
