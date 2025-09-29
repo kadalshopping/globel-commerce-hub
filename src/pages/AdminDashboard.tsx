@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, Clock, AlertTriangle, ShoppingBag, Database, UserPlus, Store } from 'lucide-react';
+import { Package, Clock, AlertTriangle, ShoppingBag, Database, UserPlus, Store, ImageIcon } from 'lucide-react';
 import { useMigrateCompletedOrders } from '@/hooks/useOrderMigration';
+import { HeaderImageManagement } from '@/components/admin/HeaderImageManagement';
 
 const AdminDashboard = () => {
   const { data: pendingProducts = [], isLoading, error } = usePendingProducts();
@@ -71,6 +72,10 @@ const AdminDashboard = () => {
               <UserPlus className="h-4 w-4" />
               Create Accounts
             </TabsTrigger>
+            <TabsTrigger value="header-images" className="flex items-center gap-2">
+              <ImageIcon className="h-4 w-4" />
+              Header Images
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="products" className="space-y-4">
@@ -107,6 +112,10 @@ const AdminDashboard = () => {
           
           <TabsContent value="accounts" className="space-y-4">
             <CreateAccountForm />
+          </TabsContent>
+          
+          <TabsContent value="header-images" className="space-y-4">
+            <HeaderImageManagement />
           </TabsContent>
         </Tabs>
       </div>

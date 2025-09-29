@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Product } from '@/types/product';
-import { Edit, Package, DollarSign, ShoppingCart } from 'lucide-react';
+import { Edit, Package, DollarSign, ShoppingCart, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -34,6 +34,38 @@ export const AdminProductManagement = () => {
       </div>
     );
   }
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Product deleted successfully',
+      });
+
+      refetch();
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete product',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleUpdateProduct = async (updatedProduct: Product) => {
     setIsUpdating(true);
@@ -112,6 +144,7 @@ export const AdminProductManagement = () => {
                 key={product.id} 
                 product={product} 
                 onEdit={setEditingProduct}
+                onDelete={handleDeleteProduct}
               />
             ))}
           </div>
@@ -141,9 +174,10 @@ export const AdminProductManagement = () => {
 interface ProductManagementCardProps {
   product: Product;
   onEdit: (product: Product) => void;
+  onDelete: (productId: string) => void;
 }
 
-const ProductManagementCard = ({ product, onEdit }: ProductManagementCardProps) => {
+const ProductManagementCard = ({ product, onEdit, onDelete }: ProductManagementCardProps) => {
   const discountAmount = product.mrp - product.selling_price;
   const discountPercentage = discountAmount > 0 ? ((discountAmount / product.mrp) * 100).toFixed(0) : 0;
 
@@ -206,14 +240,23 @@ const ProductManagementCard = ({ product, onEdit }: ProductManagementCardProps) 
           {product.category && <span>Category: {product.category}</span>}
         </div>
         
-        <Button 
-          onClick={() => onEdit(product)}
-          className="w-full"
-          variant="outline"
-        >
-          <Edit className="h-4 w-4 mr-2" />
-          Edit Product
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => onEdit(product)}
+            className="flex-1"
+            variant="outline"
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Product
+          </Button>
+          <Button 
+            onClick={() => onDelete(product.id)}
+            variant="destructive"
+            size="sm"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
