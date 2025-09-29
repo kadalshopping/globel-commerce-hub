@@ -77,7 +77,7 @@ export const TopDealsSection = () => {
   };
 
   const handleNext = () => {
-    if (currentIndex < deals.length - 4) {
+    if (currentIndex < deals.length - 2) {
       setCurrentIndex(currentIndex + 1);
     }
   };
@@ -99,9 +99,9 @@ export const TopDealsSection = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const visibleDeals = deals.slice(currentIndex, currentIndex + 4);
+  const visibleDeals = deals.slice(currentIndex, currentIndex + 2);
   const canScrollLeft = currentIndex > 0;
-  const canScrollRight = currentIndex < deals.length - 4;
+  const canScrollRight = currentIndex < deals.length - 2;
 
   // Add swipe functionality
   const swipeHandlers = useSwipe({
@@ -171,7 +171,7 @@ export const TopDealsSection = () => {
         </div>
 
         <div 
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 touch-pan-y"
+          className="grid grid-cols-2 gap-4 touch-pan-y"
           {...swipeHandlers}
         >
           {visibleDeals.map((deal) => (
@@ -281,18 +281,18 @@ export const TopDealsSection = () => {
         </div>
 
         {/* Pagination dots */}
-        {deals.length > 4 && (
+        {deals.length > 2 && (
           <div className="flex justify-center mt-6">
             <div className="flex gap-2">
-              {Array.from({ length: Math.ceil(deals.length / 4) }).map((_, index) => (
+              {Array.from({ length: Math.ceil(deals.length / 2) }).map((_, index) => (
                 <button
                   key={index}
                   className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                    Math.floor(currentIndex / 4) === index
+                    Math.floor(currentIndex / 2) === index
                       ? 'bg-red-600'
                       : 'bg-red-200 hover:bg-red-300'
                   }`}
-                  onClick={() => setCurrentIndex(index * 4)}
+                  onClick={() => setCurrentIndex(index * 2)}
                 />
               ))}
             </div>
