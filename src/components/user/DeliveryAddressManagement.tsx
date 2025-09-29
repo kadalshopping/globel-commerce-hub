@@ -8,8 +8,10 @@ import { Switch } from '@/components/ui/switch';
 import { useDeliveryAddresses, useCreateAddress, useUpdateAddress, useDeleteAddress, DeliveryAddress } from '@/hooks/useDeliveryAddresses';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const DeliveryAddressManagement = () => {
+  const { user } = useAuth();
   const { data: addresses = [], isLoading } = useDeliveryAddresses();
   const createAddress = useCreateAddress();
   const updateAddress = useUpdateAddress();
@@ -28,6 +30,18 @@ export const DeliveryAddressManagement = () => {
     is_default: false,
   });
 
+  // Show message if user is not authenticated
+  if (!user) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-muted-foreground mb-4">Please sign in to manage delivery addresses.</p>
+        <Button onClick={() => window.location.href = '/auth'}>
+          Sign In
+        </Button>
+      </div>
+    );
+  }
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -44,11 +58,33 @@ export const DeliveryAddressManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Check if user is authenticated
+    if (!user?.id) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to save delivery addresses.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Basic validation
+    if (!formData.name.trim() || !formData.address.trim() || !formData.city.trim() || 
+        !formData.state.trim() || !formData.pincode.trim() || !formData.phone.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
       if (editingAddress) {
         await updateAddress.mutateAsync({ id: editingAddress.id, ...formData });
         toast({ title: 'Address updated successfully' });
       } else {
+        console.log('Creating address for user:', user.id, 'with data:', formData);
         await createAddress.mutateAsync(formData);
         toast({ title: 'Address added successfully' });
       }
@@ -56,9 +92,10 @@ export const DeliveryAddressManagement = () => {
       setIsDialogOpen(false);
       resetForm();
     } catch (error: any) {
+      console.error('Address save error:', error);
       toast({
-        title: 'Error',
-        description: error.message,
+        title: 'Error saving address',
+        description: error.message || 'Failed to save address. Please try again.',
         variant: 'destructive',
       });
     }

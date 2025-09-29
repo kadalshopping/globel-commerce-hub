@@ -44,7 +44,11 @@ export const useCreateAddress = () => {
   
   return useMutation({
     mutationFn: async (address: Omit<DeliveryAddress, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-      if (!user?.id) throw new Error('User not authenticated');
+      if (!user?.id) {
+        throw new Error('Authentication required. Please sign in to save addresses.');
+      }
+      
+      console.log('Creating address with user_id:', user.id, address);
       
       const { data, error } = await supabase
         .from('delivery_addresses')
@@ -52,12 +56,24 @@ export const useCreateAddress = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        if (error.code === 'PGRST301') {
+          throw new Error('Permission denied. Please check your authentication status.');
+        } else if (error.code === '23505') {
+          throw new Error('This address already exists.');
+        } else {
+          throw new Error(error.message || 'Failed to save address. Please try again.');
+        }
+      }
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['delivery-addresses'] });
     },
+    onError: (error) => {
+      console.error('Address creation failed:', error);
+    }
   });
 };
 
