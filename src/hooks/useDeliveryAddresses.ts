@@ -54,7 +54,7 @@ export const useCreateAddress = () => {
         .from('delivery_addresses')
         .insert({ ...address, user_id: user.id })
         .select()
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Supabase error:', error);
@@ -87,7 +87,7 @@ export const useUpdateAddress = () => {
         .update(updates)
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return data;
