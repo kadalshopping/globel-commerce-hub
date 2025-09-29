@@ -22,9 +22,9 @@ export const PendingPayments = () => {
     setProcessingOrderId(pendingOrder.id);
 
     try {
-      console.log('🚀 Converting pending order to completed order:', pendingOrder.order_number);
+      console.log('🚀 Auto-completing order:', pendingOrder.order_number);
 
-      // Create completed order directly
+      // Create completed order directly with confirmed status
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -33,8 +33,8 @@ export const PendingPayments = () => {
           delivery_address: pendingOrder.delivery_address,
           items: pendingOrder.items,
           order_number: pendingOrder.order_number,
-          payment_status: 'pending',
-          status: 'pending'
+          payment_status: 'completed',
+          status: 'processing'
         })
         .select()
         .single();
@@ -54,11 +54,11 @@ export const PendingPayments = () => {
         console.error('Failed to delete pending order:', deleteError);
       }
 
-      console.log('✅ Order completed successfully:', order.order_number);
+      console.log('✅ Order auto-completed successfully:', order.order_number);
 
       toast({
-        title: '🎉 Order Completed!',
-        description: `Order #${order.order_number} has been placed successfully.`,
+        title: '🎉 Order Processed!',
+        description: `Order #${order.order_number} is now being processed.`,
       });
 
       refetch();
@@ -157,10 +157,10 @@ export const PendingPayments = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <AlertCircle className="h-5 w-5 text-orange-500" />
-          <h2 className="text-2xl font-bold">Pending Orders</h2>
+          <h2 className="text-2xl font-bold">Orders Ready to Process</h2>
         </div>
-        <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-          {pendingOrders.length} Pending
+        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+          {pendingOrders.length} Ready
         </Badge>
       </div>
 
@@ -170,9 +170,9 @@ export const PendingPayments = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">Order #{pendingOrder.order_number}</CardTitle>
-                <Badge variant="secondary" className="flex items-center gap-1 bg-orange-100 text-orange-800">
+                <Badge variant="secondary" className="flex items-center gap-1 bg-blue-100 text-blue-800">
                   <Clock className="w-3 h-3" />
-                  Pending Confirmation
+                  Processing
                 </Badge>
               </div>
             </CardHeader>
@@ -275,8 +275,8 @@ export const PendingPayments = () => {
                     disabled={processingOrderId === pendingOrder.id}
                     className="flex-1"
                   >
-                    <ShoppingBag className="w-4 h-4 mr-2" />
-                    {processingOrderId === pendingOrder.id ? 'Processing...' : 'Confirm Order'}
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    {processingOrderId === pendingOrder.id ? 'Processing...' : 'Start Processing'}
                   </Button>
                   <Button 
                     onClick={() => cancelPendingOrder(pendingOrder)}

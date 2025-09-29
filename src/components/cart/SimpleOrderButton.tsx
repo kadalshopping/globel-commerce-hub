@@ -37,8 +37,8 @@ const SimpleOrderButton: React.FC<SimpleOrderButtonProps> = ({ priceBreakdown })
         } as any,
         items: cart.items as any,
         order_number: orderNumber,
-        payment_status: 'pending',
-        status: 'pending'
+        payment_status: 'completed',
+        status: 'processing'
       })
       .select()
       .single();
