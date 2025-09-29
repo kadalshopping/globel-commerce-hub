@@ -5,7 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { ProductDetails } from "@/components/product/ProductDetails";
 import { SimilarProducts } from "@/components/product/SimilarProducts";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home, ChevronRight } from "lucide-react";
 
 const ProductDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,14 +52,51 @@ const ProductDetailsPage = () => {
       <Header />
       <main className="flex-1">
         <div className="container mx-auto px-4 py-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate(-1)}
-            className="mb-6"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
+          {/* Breadcrumb Navigation */}
+          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+            <button 
+              onClick={() => navigate('/')}
+              className="flex items-center gap-1 hover:text-primary transition-colors"
+            >
+              <Home className="h-4 w-4" />
+              Home
+            </button>
+            <ChevronRight className="h-3 w-3" />
+            <button 
+              onClick={() => navigate('/')}
+              className="hover:text-primary transition-colors"
+            >
+              Products
+            </button>
+            {product.category && (
+              <>
+                <ChevronRight className="h-3 w-3" />
+                <span className="text-foreground">{product.category}</span>
+              </>
+            )}
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-foreground truncate max-w-[200px]">{product.title}</span>
+          </nav>
+          
+          {/* Action Buttons */}
+          <div className="flex gap-3 mb-6">
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Back to Home
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </div>
           
           <ProductDetails product={product} />
           <SimilarProducts 
