@@ -249,8 +249,9 @@ const Checkout = () => {
         const { data, error } = await supabase.functions.invoke('create-payment-link', {
           body: {
             amount: priceBreakdown.total,
-            items: orderData.items,
-            delivery_address: selectedAddress,
+            cartItems: orderData.items,
+            deliveryAddress: selectedAddress,
+            priceBreakdown: priceBreakdown,
           },
         });
 
