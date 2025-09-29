@@ -38,14 +38,14 @@ export const RecentlyViewedSection = () => {
   }, []);
 
   const handleNext = () => {
-    if (currentIndex < recentItems.length - 4) {
-      setCurrentIndex(currentIndex + 1);
+    if (currentIndex < recentItems.length - 12) {
+      setCurrentIndex(currentIndex + 12);
     }
   };
 
   const handlePrev = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+      setCurrentIndex(Math.max(0, currentIndex - 12));
     }
   };
 
@@ -58,9 +58,9 @@ export const RecentlyViewedSection = () => {
     setRecentItems([]);
   };
 
-  const visibleItems = recentItems.slice(currentIndex, currentIndex + 4);
+  const visibleItems = recentItems.slice(currentIndex, Math.min(currentIndex + 12, recentItems.length));
   const canScrollLeft = currentIndex > 0;
-  const canScrollRight = currentIndex < recentItems.length - 4;
+  const canScrollRight = currentIndex + 12 < recentItems.length;
 
   // Add swipe functionality
   const swipeHandlers = useSwipe({
@@ -119,7 +119,7 @@ export const RecentlyViewedSection = () => {
         </div>
 
         <div 
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 touch-pan-y"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 touch-pan-y"
           {...swipeHandlers}
         >
           {visibleItems.map((item) => (
@@ -156,18 +156,18 @@ export const RecentlyViewedSection = () => {
           ))}
         </div>
 
-        {recentItems.length > 4 && (
+        {recentItems.length > 12 && (
           <div className="flex justify-center mt-4">
             <div className="flex gap-1">
-              {Array.from({ length: Math.ceil(recentItems.length / 4) }).map((_, index) => (
+              {Array.from({ length: Math.ceil(recentItems.length / 12) }).map((_, index) => (
                 <button
                   key={index}
                   className={`w-2 h-2 rounded-full transition-colors ${
-                    Math.floor(currentIndex / 4) === index
+                    Math.floor(currentIndex / 12) === index
                       ? 'bg-primary'
                       : 'bg-muted-foreground/30'
                   }`}
-                  onClick={() => setCurrentIndex(index * 4)}
+                  onClick={() => setCurrentIndex(index * 12)}
                 />
               ))}
             </div>
