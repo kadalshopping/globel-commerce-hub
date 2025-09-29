@@ -99,10 +99,6 @@ export const TopDealsSection = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (loading || deals.length === 0) {
-    return null;
-  }
-
   const visibleDeals = deals.slice(currentIndex, currentIndex + 4);
   const canScrollLeft = currentIndex > 0;
   const canScrollRight = currentIndex < deals.length - 4;
@@ -112,6 +108,10 @@ export const TopDealsSection = () => {
     onSwipeLeft: handleNext,
     onSwipeRight: handlePrev,
   });
+
+  if (loading || deals.length === 0) {
+    return null;
+  }
 
   return (
     <div className="bg-gradient-to-r from-red-50 to-orange-50 border-b">

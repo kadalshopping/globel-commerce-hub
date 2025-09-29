@@ -58,10 +58,6 @@ export const RecentlyViewedSection = () => {
     setRecentItems([]);
   };
 
-  if (recentItems.length === 0) {
-    return null;
-  }
-
   const visibleItems = recentItems.slice(currentIndex, currentIndex + 4);
   const canScrollLeft = currentIndex > 0;
   const canScrollRight = currentIndex < recentItems.length - 4;
@@ -71,6 +67,10 @@ export const RecentlyViewedSection = () => {
     onSwipeLeft: handleNext,
     onSwipeRight: handlePrev,
   });
+
+  if (recentItems.length === 0) {
+    return null;
+  }
 
   return (
     <div className="bg-background border-b">
