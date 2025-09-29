@@ -121,24 +121,42 @@ export const useAllOrderItems = () => {
   return useQuery({
     queryKey: ['all-order-items'],
     queryFn: async () => {
-      console.log('Fetching all order items...');
-      const { data, error } = await supabase
+      // First get order items with products and orders
+      const { data: orderItems, error } = await supabase
         .from('order_items')
         .select(`
           *,
           product:products(id, title, images),
-          order:orders(order_number, delivery_address, user_id),
-          shop_owner:profiles!shop_owner_id(full_name, address, phone)
+          order:orders(order_number, delivery_address, user_id)
         `)
         .order('created_at', { ascending: false });
       
-      console.log('Order items query result:', { data, error });
       if (error) throw error;
-      return data as OrderItem[];
+      
+      // Get unique shop owner IDs
+      const shopOwnerIds = [...new Set(orderItems?.map(item => item.shop_owner_id).filter(Boolean))];
+      
+      // Fetch profiles for all shop owners
+      let shopOwnerProfiles: any[] = [];
+      if (shopOwnerIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, address, phone')
+          .in('user_id', shopOwnerIds);
+        
+        if (!profilesError) {
+          shopOwnerProfiles = profiles || [];
+        }
+      }
+      
+      // Manually join the data
+      const enrichedOrderItems = orderItems?.map(item => ({
+        ...item,
+        shop_owner: shopOwnerProfiles.find(profile => profile.user_id === item.shop_owner_id) || null
+      })) || [];
+      
+      return enrichedOrderItems as OrderItem[];
     },
-    staleTime: 0, // Force fresh data
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
   });
 };
 

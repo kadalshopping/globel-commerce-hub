@@ -15,10 +15,6 @@ export const AdminOrderManagement = () => {
   const markDelivered = useMarkDelivered();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
-  console.log('AdminOrderManagement - orderItems:', orderItems);
-  console.log('AdminOrderManagement - isLoading:', isLoading);
-  console.log('AdminOrderManagement - error:', error);
-
   if (isLoading) {
     return <div className="p-6">Loading orders...</div>;
   }
