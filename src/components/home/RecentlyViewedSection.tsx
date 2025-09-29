@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
+import { useSwipe } from "@/hooks/useSwipe";
 
 interface RecentlyViewedItem {
   id: string;
@@ -65,6 +66,12 @@ export const RecentlyViewedSection = () => {
   const canScrollLeft = currentIndex > 0;
   const canScrollRight = currentIndex < recentItems.length - 4;
 
+  // Add swipe functionality
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: handleNext,
+    onSwipeRight: handlePrev,
+  });
+
   return (
     <div className="bg-background border-b">
       <div className="container mx-auto px-4 py-6">
@@ -111,7 +118,10 @@ export const RecentlyViewedSection = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div 
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 touch-pan-y"
+          {...swipeHandlers}
+        >
           {visibleItems.map((item) => (
             <Card
               key={item.id}

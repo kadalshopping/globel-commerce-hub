@@ -15,6 +15,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { BuyNowButton } from "./BuyNowButton";
 import { useTrackProductView } from "@/hooks/useRecentlyViewed";
 import { SizeSelector } from "./SizeSelector";
+import { useSwipe } from "@/hooks/useSwipe";
 
 interface ProductDetailsProps {
   product: Product;
@@ -65,6 +66,12 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
     'fast delivery',
     ...(product.tags || [])
   ].filter(Boolean).join(', ');
+
+  // Add swipe functionality for images
+  const imageSwipeHandlers = useSwipe({
+    onSwipeLeft: () => setSelectedImageIndex(selectedImageIndex === images.length - 1 ? 0 : selectedImageIndex + 1),
+    onSwipeRight: () => setSelectedImageIndex(selectedImageIndex === 0 ? images.length - 1 : selectedImageIndex - 1),
+  });
   
 
   return (
@@ -80,7 +87,10 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
       {/* Product Images - Enhanced Layout */}
       <div className="space-y-4">
-        <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group shadow-lg">
+        <div 
+          className="relative aspect-square overflow-hidden rounded-xl bg-muted group shadow-lg touch-pan-y"
+          {...imageSwipeHandlers}
+        >
           <ImageWithSkeleton
             src={images[selectedImageIndex]}
             alt={product.title}

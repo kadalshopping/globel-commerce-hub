@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { ImageWithSkeleton } from "@/components/ui/image-skeleton";
 import { BuyNowButton } from "@/components/product/BuyNowButton";
+import { useSwipe } from "@/hooks/useSwipe";
 
 interface TopDeal {
   id: string;
@@ -106,6 +107,12 @@ export const TopDealsSection = () => {
   const canScrollLeft = currentIndex > 0;
   const canScrollRight = currentIndex < deals.length - 4;
 
+  // Add swipe functionality
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: handleNext,
+    onSwipeRight: handlePrev,
+  });
+
   return (
     <div className="bg-gradient-to-r from-red-50 to-orange-50 border-b">
       <div className="container mx-auto px-4 py-6">
@@ -163,7 +170,10 @@ export const TopDealsSection = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 touch-pan-y"
+          {...swipeHandlers}
+        >
           {visibleDeals.map((deal) => (
             <Card
               key={deal.id}
