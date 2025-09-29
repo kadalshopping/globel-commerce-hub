@@ -78,14 +78,14 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
         schema={[productSchema, breadcrumbSchema]}
       />
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-      {/* Product Images */}
+      {/* Product Images - Enhanced Layout */}
       <div className="space-y-4">
-        <div className="relative aspect-square overflow-hidden rounded-lg group">
+        <div className="relative aspect-square overflow-hidden rounded-xl bg-muted group shadow-lg">
           <ImageWithSkeleton
             src={images[selectedImageIndex]}
             alt={product.title}
-            className="h-full w-full object-cover rounded-lg transition-all duration-300"
-            skeletonClassName="aspect-square rounded-lg"
+            className="h-full w-full object-cover rounded-xl transition-all duration-500 group-hover:scale-105"
+            skeletonClassName="aspect-square rounded-xl"
             priority={true}
             optimizeSize={{ width: 600, height: 600, quality: 85 }}
             sizes="(max-width: 1024px) 100vw, 50vw"
@@ -96,60 +96,67 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
             <>
               <button
                 onClick={() => setSelectedImageIndex(selectedImageIndex === 0 ? images.length - 1 : selectedImageIndex - 1)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 backdrop-blur-sm"
                 aria-label="Previous image"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-5 w-5" />
               </button>
               <button
                 onClick={() => setSelectedImageIndex(selectedImageIndex === images.length - 1 ? 0 : selectedImageIndex + 1)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 backdrop-blur-sm"
                 aria-label="Next image"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-5 w-5" />
               </button>
             </>
           )}
           
           {/* Image Indicators */}
           {images.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 bg-black/40 backdrop-blur-sm rounded-full px-4 py-2">
               {images.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
-                  className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                     selectedImageIndex === index 
-                      ? 'bg-white scale-125' 
-                      : 'bg-white/50 hover:bg-white/70'
+                      ? 'bg-white scale-125 shadow-sm' 
+                      : 'bg-white/60 hover:bg-white/80'
                   }`}
                   aria-label={`View image ${index + 1}`}
                 />
               ))}
             </div>
           )}
+          
+          {/* Image Counter */}
+          {images.length > 1 && (
+            <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full">
+              {selectedImageIndex + 1} / {images.length}
+            </div>
+          )}
         </div>
         
-        {/* Thumbnail Gallery */}
+        {/* Thumbnail Gallery - Enhanced */}
         {images.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {images.map((image, index) => (
               <button
                 key={index}
                 onClick={() => setSelectedImageIndex(index)}
-                className={`flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
+                className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 hover:scale-105 hover:shadow-md ${
                   selectedImageIndex === index 
-                    ? 'border-primary shadow-md' 
-                    : 'border-transparent hover:border-muted-foreground'
+                    ? 'border-primary shadow-lg ring-2 ring-primary/20' 
+                    : 'border-muted hover:border-muted-foreground'
                 }`}
               >
                 <ImageWithSkeleton
                   src={image}
                   alt={`${product.title} ${index + 1}`}
                   className="h-full w-full object-cover"
-                  skeletonClassName="w-16 h-16"
+                  skeletonClassName="w-20 h-20"
                   optimizeSize={{ width: 80, height: 80, quality: 70 }}
-                  sizes="64px"
+                  sizes="80px"
                 />
               </button>
             ))}
