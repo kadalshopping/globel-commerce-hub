@@ -197,16 +197,7 @@ export const Header = () => {
           </div>
         </div>
 
-        {/* Categories - scrollable on mobile */}
-        <div className="flex items-center gap-3 sm:gap-6 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t overflow-x-auto scrollbar-hide">
-          <Button variant="ghost" className="whitespace-nowrap text-sm">Electronics</Button>
-          <Button variant="ghost" className="whitespace-nowrap text-sm">Fashion</Button>
-          <Button variant="ghost" className="whitespace-nowrap text-sm">Home & Garden</Button>
-          <Button variant="ghost" className="whitespace-nowrap text-sm">Sports</Button>
-          <Button variant="ghost" className="whitespace-nowrap text-sm">Books</Button>
-          <Button variant="ghost" className="whitespace-nowrap text-sm">Health</Button>
-          <Button variant="ghost" className="whitespace-nowrap text-sm">More</Button>
-        </div>
+        {/* Categories section hidden as requested */}
       </div>
     </header>
   );
