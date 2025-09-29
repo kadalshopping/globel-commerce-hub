@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Star, Heart, Minus, Plus, Package, Truck, Shield, RotateCcw } from "lucide-react";
+import { Star, Heart, Minus, Plus, Package, Truck, Shield, RotateCcw, ChevronLeft, ChevronRight } from "lucide-react";
 import { Product } from "@/types/product";
 import { useProductRating } from "@/hooks/useReviews";
 import { ReviewSection } from "./ReviewSection";
@@ -80,27 +80,66 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
       {/* Product Images */}
       <div className="space-y-4">
-        <div className="aspect-square overflow-hidden rounded-lg">
+        <div className="relative aspect-square overflow-hidden rounded-lg group">
           <ImageWithSkeleton
             src={images[selectedImageIndex]}
             alt={product.title}
-            className="h-full w-full object-cover rounded-lg"
+            className="h-full w-full object-cover rounded-lg transition-all duration-300"
             skeletonClassName="aspect-square rounded-lg"
             priority={true}
             optimizeSize={{ width: 600, height: 600, quality: 85 }}
             sizes="(max-width: 1024px) 100vw, 50vw"
           />
+          
+          {/* Navigation Arrows */}
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={() => setSelectedImageIndex(selectedImageIndex === 0 ? images.length - 1 : selectedImageIndex - 1)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setSelectedImageIndex(selectedImageIndex === images.length - 1 ? 0 : selectedImageIndex + 1)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                aria-label="Next image"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </>
+          )}
+          
+          {/* Image Indicators */}
+          {images.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+              {images.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImageIndex(index)}
+                  className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                    selectedImageIndex === index 
+                      ? 'bg-white scale-125' 
+                      : 'bg-white/50 hover:bg-white/70'
+                  }`}
+                  aria-label={`View image ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
         
+        {/* Thumbnail Gallery */}
         {images.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto">
+          <div className="flex gap-2 overflow-x-auto pb-2">
             {images.map((image, index) => (
               <button
                 key={index}
                 onClick={() => setSelectedImageIndex(index)}
-                className={`flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-colors ${
+                className={`flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-all duration-200 hover:scale-105 ${
                   selectedImageIndex === index 
-                    ? 'border-primary' 
+                    ? 'border-primary shadow-md' 
                     : 'border-transparent hover:border-muted-foreground'
                 }`}
               >
