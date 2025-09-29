@@ -77,14 +77,14 @@ export const TopDealsSection = () => {
   };
 
   const handleNext = () => {
-    if (currentIndex < deals.length - 5) {
-      setCurrentIndex(currentIndex + 5);
+    if (currentIndex < deals.length - 4) {
+      setCurrentIndex(currentIndex + 1);
     }
   };
 
   const handlePrev = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(Math.max(0, currentIndex - 5));
+      setCurrentIndex(currentIndex - 1);
     }
   };
 
@@ -99,9 +99,9 @@ export const TopDealsSection = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const visibleDeals = deals.slice(currentIndex, Math.min(currentIndex + 5, deals.length));
+  const visibleDeals = deals.slice(currentIndex, currentIndex + 4);
   const canScrollLeft = currentIndex > 0;
-  const canScrollRight = currentIndex + 5 < deals.length;
+  const canScrollRight = currentIndex < deals.length - 4;
 
   // Add swipe functionality
   const swipeHandlers = useSwipe({
@@ -171,7 +171,7 @@ export const TopDealsSection = () => {
         </div>
 
         <div 
-          className="flex flex-col space-y-4 touch-pan-y"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 touch-pan-y"
           {...swipeHandlers}
         >
           {visibleDeals.map((deal) => (
@@ -179,124 +179,120 @@ export const TopDealsSection = () => {
               key={deal.id}
               className="group relative overflow-hidden border-red-200 hover:shadow-xl transition-all duration-300 bg-white"
             >
-              <div className="flex">
-                {/* Deal Badge */}
-                <div className="absolute top-2 left-2 z-10">
-                  <Badge className="bg-red-600 text-white font-bold animate-pulse">
-                    {deal.discount_percentage}% OFF
-                  </Badge>
-                </div>
+              {/* Deal Badge */}
+              <div className="absolute top-2 left-2 z-10">
+                <Badge className="bg-red-600 text-white font-bold animate-pulse">
+                  {deal.discount_percentage}% OFF
+                </Badge>
+              </div>
 
-                {/* Trending Badge */}
-                <div className="absolute top-2 right-2 z-10">
-                  <Badge variant="secondary" className="bg-orange-100 text-orange-700">
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                    HOT
-                  </Badge>
-                </div>
+              {/* Trending Badge */}
+              <div className="absolute top-2 right-2 z-10">
+                <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  HOT
+                </Badge>
+              </div>
 
-                {/* Product Image */}
-                <div 
-                  className="w-32 h-32 flex-shrink-0 overflow-hidden cursor-pointer"
+              {/* Product Image */}
+              <div 
+                className="aspect-square overflow-hidden cursor-pointer"
+                onClick={() => handleProductClick(deal)}
+              >
+                <ImageWithSkeleton
+                  src={deal.images?.[0] || "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=400&h=400&fit=crop&q=80"}
+                  alt={deal.title}
+                  className="h-full w-full object-cover transition-transform group-hover:scale-110"
+                  skeletonClassName="aspect-square"
+                  optimizeSize={{ width: 300, height: 300, quality: 80 }}
+                  sizes="(max-width: 640px) 50vw, 25vw"
+                />
+              </div>
+
+              {/* Product Info */}
+              <div className="p-4">
+                <h3 
+                  className="font-semibold text-sm line-clamp-2 mb-2 cursor-pointer hover:text-primary"
                   onClick={() => handleProductClick(deal)}
                 >
-                  <ImageWithSkeleton
-                    src={deal.images?.[0] || "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=400&h=400&fit=crop&q=80"}
-                    alt={deal.title}
-                    className="h-full w-full object-cover transition-transform group-hover:scale-110"
-                    skeletonClassName="w-32 h-32"
-                    optimizeSize={{ width: 128, height: 128, quality: 80 }}
-                    sizes="128px"
-                  />
+                  {deal.title}
+                </h3>
+
+                {/* Rating (placeholder) */}
+                <div className="flex items-center gap-1 mb-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-3 w-3 ${
+                        i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                      }`}
+                    />
+                  ))}
+                  <span className="text-xs text-muted-foreground ml-1">(4.2)</span>
                 </div>
 
-                {/* Product Info */}
-                <div className="flex-1 p-4 flex flex-col justify-between">
-                  <div>
-                    <h3 
-                      className="font-semibold text-sm line-clamp-2 mb-2 cursor-pointer hover:text-primary"
-                      onClick={() => handleProductClick(deal)}
-                    >
-                      {deal.title}
-                    </h3>
+                {/* Price */}
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-lg font-bold text-red-600">
+                    ₹{deal.selling_price.toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-sm text-muted-foreground line-through">
+                    ₹{deal.mrp.toLocaleString('en-IN')}
+                  </span>
+                </div>
 
-                    {/* Rating (placeholder) */}
-                    <div className="flex items-center gap-1 mb-2">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-3 w-3 ${
-                            i < 4 ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                      <span className="text-xs text-muted-foreground ml-1">(4.2)</span>
-                    </div>
+                {/* Buy Now Button */}
+                <BuyNowButton
+                  product={{
+                    id: deal.id,
+                    title: deal.title,
+                    selling_price: deal.selling_price,
+                    stock_quantity: deal.stock_quantity,
+                    image: deal.images?.[0],
+                    shop_owner_id: deal.shop_owner_id,
+                  }}
+                  className="w-full h-9 text-sm bg-red-600 hover:bg-red-700 border-red-600"
+                />
 
-                    {/* Price */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg font-bold text-red-600">
-                        ₹{deal.selling_price.toLocaleString('en-IN')}
-                      </span>
-                      <span className="text-sm text-muted-foreground line-through">
-                        ₹{deal.mrp.toLocaleString('en-IN')}
-                      </span>
-                    </div>
+                {/* Stock Indicator */}
+                <div className="mt-2 flex items-center justify-between text-xs">
+                  <span className="text-orange-600 font-medium">
+                    Only {deal.stock_quantity} left!
+                  </span>
+                  <span className="text-muted-foreground">
+                    Ends in {formatTime(timeLeft)}
+                  </span>
+                </div>
 
-                    {/* Stock Indicator */}
-                    <div className="flex items-center justify-between text-xs mb-2">
-                      <span className="text-orange-600 font-medium">
-                        Only {deal.stock_quantity} left!
-                      </span>
-                      <span className="text-muted-foreground">
-                        Ends in {formatTime(timeLeft)}
-                      </span>
-                    </div>
-
-                    {/* Progress Bar for Stock */}
-                    <div className="mb-3">
-                      <div className="bg-gray-200 rounded-full h-1.5">
-                        <div 
-                          className="bg-gradient-to-r from-red-500 to-orange-500 h-1.5 rounded-full transition-all duration-300"
-                          style={{ 
-                            width: `${Math.max(20, Math.min(80, (deal.stock_quantity / 100) * 100))}%` 
-                          }}
-                        />
-                      </div>
-                    </div>
+                {/* Progress Bar for Stock */}
+                <div className="mt-2">
+                  <div className="bg-gray-200 rounded-full h-1.5">
+                    <div 
+                      className="bg-gradient-to-r from-red-500 to-orange-500 h-1.5 rounded-full transition-all duration-300"
+                      style={{ 
+                        width: `${Math.max(20, Math.min(80, (deal.stock_quantity / 100) * 100))}%` 
+                      }}
+                    />
                   </div>
-
-                  {/* Buy Now Button */}
-                  <BuyNowButton
-                    product={{
-                      id: deal.id,
-                      title: deal.title,
-                      selling_price: deal.selling_price,
-                      stock_quantity: deal.stock_quantity,
-                      image: deal.images?.[0],
-                      shop_owner_id: deal.shop_owner_id,
-                    }}
-                    className="w-full h-9 text-sm bg-red-600 hover:bg-red-700 border-red-600"
-                  />
                 </div>
               </div>
             </Card>
           ))}
         </div>
 
-        {/* Pagination dots - Updated condition */}
-        {deals.length > 5 && (
+        {/* Pagination dots */}
+        {deals.length > 4 && (
           <div className="flex justify-center mt-6">
             <div className="flex gap-2">
-              {Array.from({ length: Math.ceil(deals.length / 5) }).map((_, index) => (
+              {Array.from({ length: Math.ceil(deals.length / 4) }).map((_, index) => (
                 <button
                   key={index}
                   className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                    Math.floor(currentIndex / 5) === index
+                    Math.floor(currentIndex / 4) === index
                       ? 'bg-red-600'
                       : 'bg-red-200 hover:bg-red-300'
                   }`}
-                  onClick={() => setCurrentIndex(index * 5)}
+                  onClick={() => setCurrentIndex(index * 4)}
                 />
               ))}
             </div>
