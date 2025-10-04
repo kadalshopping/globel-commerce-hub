@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useAllProducts } from '@/hooks/useAllProducts';
-import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,16 +11,15 @@ import { Product } from '@/types/product';
 import { Edit, Package, DollarSign, ShoppingCart, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useIsAdmin } from '@/hooks/useUserRole';
+import { ImageUpload } from '@/components/ui/image-upload';
 
 export const AdminProductManagement = () => {
-  const { user } = useAuth();
+  const isAdmin = useIsAdmin();
   const { data: products = [], isLoading, refetch } = useAllProducts();
   const { toast } = useToast();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-
-  // Check if user is admin using the has_role function or user metadata
-  const isAdmin = user?.user_metadata?.role === 'admin' || user?.app_metadata?.role === 'admin';
 
   if (!isAdmin) {
     return null;
@@ -279,7 +277,7 @@ const EditProductForm = ({ product, onSave, onCancel, isLoading }: EditProductFo
     brand: product.brand || '',
     stock_quantity: product.stock_quantity || 0,
     tags: product.tags?.join(', ') || '',
-    images: product.images?.join(', ') || ''
+    images: product.images || []
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -288,7 +286,7 @@ const EditProductForm = ({ product, onSave, onCancel, isLoading }: EditProductFo
       ...product,
       ...formData,
       tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
-      images: formData.images ? formData.images.split(',').map(img => img.trim()) : []
+      images: formData.images
     });
   };
 
@@ -382,13 +380,11 @@ const EditProductForm = ({ product, onSave, onCancel, isLoading }: EditProductFo
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="images">Image URLs (comma separated)</Label>
-        <Textarea
-          id="images"
-          value={formData.images}
-          onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-          placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
-          rows={2}
+        <Label htmlFor="images">Product Images</Label>
+        <ImageUpload
+          existingImages={formData.images}
+          onImagesChange={(images) => setFormData({ ...formData, images })}
+          maxImages={5}
         />
       </div>
       
