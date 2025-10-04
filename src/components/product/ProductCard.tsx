@@ -16,6 +16,7 @@ interface ProductCardProps {
   discount?: number;
   isWishlisted?: boolean;
   stockQuantity?: number;
+  shop_owner_id?: string;
 }
 
 export const ProductCard = ({
@@ -27,6 +28,7 @@ export const ProductCard = ({
   discount,
   isWishlisted = false,
   stockQuantity = 0,
+  shop_owner_id,
 }: ProductCardProps) => {
   const navigate = useNavigate();
   const { data: rating } = useProductRating(id);
@@ -108,7 +110,7 @@ export const ProductCard = ({
             selling_price: price,
             stock_quantity: stockQuantity,
             image,
-            shop_owner_id: undefined, // This will need to be fetched from full product data
+            shop_owner_id,
           }}
           className="w-full text-xs sm:text-sm h-8 sm:h-10"
         />

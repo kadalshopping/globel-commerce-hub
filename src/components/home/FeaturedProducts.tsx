@@ -14,6 +14,7 @@ export const FeaturedProducts = () => {
     discount: product.mrp !== product.selling_price ? 
       Math.round(((product.mrp - product.selling_price) / product.mrp) * 100) : undefined,
     stockQuantity: product.stock_quantity || 0,
+    shop_owner_id: product.shop_owner_id,
   }));
 
   return (

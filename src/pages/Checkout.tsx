@@ -229,6 +229,11 @@ const Checkout = () => {
       };
 
       if (paymentMethod === 'cod') {
+        // Validate shop owner ID exists
+        if (!product.shop_owner_id) {
+          throw new Error('Product shop owner information is missing');
+        }
+
         // Create order directly for COD
         const { data: order, error: orderError } = await supabase
           .from('orders')
@@ -246,7 +251,7 @@ const Checkout = () => {
             product_id: product.id,
             quantity: quantity,
             price: product.selling_price,
-            shop_owner_id: product.shop_owner_id || user?.id,
+            shop_owner_id: product.shop_owner_id,
             status: 'waiting_for_dispatch',
           }]);
 
