@@ -19,6 +19,7 @@ interface Product {
   category: string;
   brand: string;
   tags: string[];
+  sizes: string[];
   sku: string;
 }
 
@@ -39,6 +40,7 @@ export const ProductEditDialog = ({ product, trigger }: ProductEditDialogProps) 
     brand: product.brand || '',
     sku: product.sku || '',
     tags: product.tags || [],
+    sizes: product.sizes || [],
     images: product.images || [],
   });
   
@@ -60,6 +62,7 @@ export const ProductEditDialog = ({ product, trigger }: ProductEditDialogProps) 
         brand: formData.brand,
         sku: formData.sku,
         tags: formData.tags,
+        sizes: formData.sizes,
         images: formData.images,
       });
       
@@ -81,6 +84,11 @@ export const ProductEditDialog = ({ product, trigger }: ProductEditDialogProps) 
   const handleTagsChange = (value: string) => {
     const tags = value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
     setFormData(prev => ({ ...prev, tags }));
+  };
+
+  const handleSizesChange = (value: string) => {
+    const sizes = value.split(',').map(size => size.trim()).filter(size => size.length > 0);
+    setFormData(prev => ({ ...prev, sizes }));
   };
 
   const handleImagesChange = (images: string[]) => {
@@ -208,6 +216,16 @@ export const ProductEditDialog = ({ product, trigger }: ProductEditDialogProps) 
               value={formData.tags.join(', ')}
               onChange={(e) => handleTagsChange(e.target.value)}
               placeholder="e.g., wireless, bluetooth, headphones"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="sizes">Sizes (comma-separated)</Label>
+            <Input
+              id="sizes"
+              value={formData.sizes.join(', ')}
+              onChange={(e) => handleSizesChange(e.target.value)}
+              placeholder="e.g., S, M, L, XL or 6, 7, 8, 9"
             />
           </div>
 
