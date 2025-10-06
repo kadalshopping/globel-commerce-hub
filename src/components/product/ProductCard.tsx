@@ -17,6 +17,7 @@ interface ProductCardProps {
   isWishlisted?: boolean;
   stockQuantity?: number;
   shop_owner_id?: string;
+  sizes?: string[];
 }
 
 export const ProductCard = ({
@@ -29,6 +30,7 @@ export const ProductCard = ({
   isWishlisted = false,
   stockQuantity = 0,
   shop_owner_id,
+  sizes,
 }: ProductCardProps) => {
   const navigate = useNavigate();
   const { data: rating } = useProductRating(id);
@@ -55,7 +57,7 @@ export const ProductCard = ({
       </Button>
 
       {/* Product image */}
-      <div className="aspect-square overflow-hidden">
+      <div className="aspect-square overflow-hidden relative">
         <ImageWithSkeleton
           src={image}
           alt={title}
@@ -65,6 +67,11 @@ export const ProductCard = ({
           sizes="(max-width: 640px) 120px, (max-width: 1024px) 150px, 200px"
           priority={true}
         />
+        {sizes && sizes.length > 0 && (
+          <Badge className="absolute bottom-2 right-2 bg-background/90 text-foreground text-[10px] px-1.5 py-0.5 backdrop-blur-sm">
+            {sizes.length} sizes
+          </Badge>
+        )}
       </div>
 
       {/* Product info */}
@@ -103,17 +110,18 @@ export const ProductCard = ({
         </div>
 
         {/* Buy now button */}
-        <BuyNowButton
-          product={{
-            id,
-            title,
-            selling_price: price,
-            stock_quantity: stockQuantity,
-            image,
-            shop_owner_id,
-          }}
-          className="w-full text-xs sm:text-sm h-8 sm:h-10"
-        />
+          <BuyNowButton
+            product={{
+              id,
+              title,
+              selling_price: price,
+              stock_quantity: stockQuantity,
+              image,
+              shop_owner_id,
+              sizes,
+            }}
+            className="w-full text-xs sm:text-sm h-8 sm:h-10"
+          />
       </div>
     </Card>
   );

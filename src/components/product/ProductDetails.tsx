@@ -260,12 +260,14 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
 
         {/* Size Selection */}
         {product.sizes && product.sizes.length > 0 && (
-          <SizeSelector
-            sizes={product.sizes}
-            selectedSize={selectedSize}
-            onSizeSelect={setSelectedSize}
-            className="space-y-2"
-          />
+          <Card className="p-4 bg-accent/5 border-accent/20">
+            <SizeSelector
+              sizes={product.sizes}
+              selectedSize={selectedSize}
+              onSizeSelect={setSelectedSize}
+              className="space-y-2"
+            />
+          </Card>
         )}
 
         {/* Quantity Selector */}
