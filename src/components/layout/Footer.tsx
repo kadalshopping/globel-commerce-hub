@@ -93,6 +93,20 @@ export const Footer = () => {
             <a href="#" className="hover:text-primary">Cookies</a>
           </div>
         </div>
+        
+        <Separator className="my-4" />
+        
+        <div className="flex justify-center items-center text-sm text-muted-foreground">
+          <span>Developed and maintained by </span>
+          <a 
+            href="https://wa.me/919342441467" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="font-semibold text-primary hover:underline ml-1"
+          >
+            TECHFOX
+          </a>
+        </div>
       </div>
     </footer>
   );
