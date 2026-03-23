@@ -48,15 +48,15 @@ export const AdminOrderManagement = () => {
   };
 
   const getPaymentBadge = (status?: string) => {
-    if (!status) return <Badge variant="secondary">Unknown</Badge>;
-    const map: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-      paid: { label: 'Paid', variant: 'default' },
-      pending: { label: 'Pending', variant: 'secondary' },
-      failed: { label: 'Failed', variant: 'destructive' },
-      cod: { label: 'COD', variant: 'outline' },
+    if (!status) return <Badge className="bg-muted text-muted-foreground">Unknown</Badge>;
+    const map: Record<string, { label: string; className: string }> = {
+      paid: { label: '✓ Paid', className: 'bg-success text-success-foreground' },
+      pending: { label: '⏳ Pending', className: 'bg-warning text-warning-foreground' },
+      failed: { label: '✗ Failed', className: 'bg-destructive text-destructive-foreground' },
+      cod: { label: '💵 COD', className: 'bg-info text-info-foreground' },
     };
-    const info = map[status] || { label: status, variant: 'secondary' as const };
-    return <Badge variant={info.variant}>{info.label}</Badge>;
+    const info = map[status] || { label: status, className: 'bg-muted text-muted-foreground' };
+    return <Badge className={info.className}>{info.label}</Badge>;
   };
 
   const OrderTable = ({ items, showActions }: { items: any[], showActions?: boolean }) => (

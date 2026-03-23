@@ -37,26 +37,26 @@ export const ShopOwnerOrderView = () => {
     : [];
 
   const getStatusBadge = (status: string) => {
-    const statusMap = {
-      waiting_for_dispatch: { label: 'Waiting for Dispatch', variant: 'secondary' as const },
-      dispatch_requested: { label: 'Dispatch Requested', variant: 'default' as const },
-      dispatched: { label: 'Dispatched', variant: 'default' as const },
-      delivered: { label: 'Delivered', variant: 'default' as const },
+    const statusMap: Record<string, { label: string; className: string }> = {
+      waiting_for_dispatch: { label: 'Waiting', className: 'bg-warning text-warning-foreground' },
+      dispatch_requested: { label: 'Dispatch Requested', className: 'bg-info text-info-foreground' },
+      dispatched: { label: 'Dispatched', className: 'bg-accent text-accent-foreground' },
+      delivered: { label: 'Delivered', className: 'bg-success text-success-foreground' },
     };
-    const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status, variant: 'secondary' as const };
-    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+    const info = statusMap[status] || { label: status, className: 'bg-muted text-muted-foreground' };
+    return <Badge className={info.className}>{info.label}</Badge>;
   };
 
   const getPaymentBadge = (status?: string) => {
-    if (!status) return <Badge variant="secondary">Unknown</Badge>;
-    const map: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-      paid: { label: 'Paid', variant: 'default' },
-      pending: { label: 'Pending', variant: 'secondary' },
-      failed: { label: 'Failed', variant: 'destructive' },
-      cod: { label: 'COD', variant: 'outline' },
+    if (!status) return <Badge className="bg-muted text-muted-foreground">Unknown</Badge>;
+    const map: Record<string, { label: string; className: string }> = {
+      paid: { label: '✓ Paid', className: 'bg-success text-success-foreground' },
+      pending: { label: '⏳ Pending', className: 'bg-warning text-warning-foreground' },
+      failed: { label: '✗ Failed', className: 'bg-destructive text-destructive-foreground' },
+      cod: { label: '💵 COD', className: 'bg-info text-info-foreground' },
     };
-    const info = map[status] || { label: status, variant: 'secondary' as const };
-    return <Badge variant={info.variant}>{info.label}</Badge>;
+    const info = map[status] || { label: status, className: 'bg-muted text-muted-foreground' };
+    return <Badge className={info.className}>{info.label}</Badge>;
   };
 
   // Calculate stats for selected shop owner
