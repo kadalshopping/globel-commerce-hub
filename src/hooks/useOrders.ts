@@ -36,6 +36,8 @@ export interface OrderItem {
     order_number?: string;
     delivery_address?: any;
     user_id?: string;
+    payment_status?: string;
+    status?: string;
     profiles?: {
       full_name?: string;
     };
