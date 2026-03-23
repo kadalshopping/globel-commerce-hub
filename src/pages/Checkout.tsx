@@ -217,7 +217,7 @@ const Checkout = () => {
         delivery_address: selectedAddress as any,
         price_breakdown: priceBreakdown as any,
         status: paymentMethod === 'cod' ? 'confirmed' : 'pending',
-        payment_status: paymentMethod === 'cod' ? 'pending' : 'pending',
+        payment_status: paymentMethod === 'cod' ? 'cod' : 'pending',
         order_number: `ORD-${Date.now()}`,
         items: [{
           product_id: product.id,
