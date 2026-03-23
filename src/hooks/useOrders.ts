@@ -127,7 +127,7 @@ export const useAllOrderItems = () => {
         .select(`
           *,
           product:products(id, title, images),
-          order:orders(order_number, delivery_address, user_id)
+          order:orders(order_number, delivery_address, user_id, payment_status, status)
         `)
         .order('created_at', { ascending: false });
       
