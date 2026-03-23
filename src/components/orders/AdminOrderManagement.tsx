@@ -48,6 +48,18 @@ export const AdminOrderManagement = () => {
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
   };
 
+  const getPaymentBadge = (status?: string) => {
+    if (!status) return <Badge variant="secondary">Unknown</Badge>;
+    const map: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+      paid: { label: 'Paid', variant: 'default' },
+      pending: { label: 'Pending', variant: 'secondary' },
+      failed: { label: 'Failed', variant: 'destructive' },
+      cod: { label: 'COD', variant: 'outline' },
+    };
+    const info = map[status] || { label: status, variant: 'secondary' as const };
+    return <Badge variant={info.variant}>{info.label}</Badge>;
+  };
+
   const OrderTable = ({ items, showActions }: { items: any[], showActions?: boolean }) => (
     <Table>
       <TableHeader>
@@ -56,8 +68,10 @@ export const AdminOrderManagement = () => {
           <TableHead>Product</TableHead>
           <TableHead>Shop Owner</TableHead>
           <TableHead>Customer</TableHead>
-          <TableHead>Quantity</TableHead>
+          <TableHead>Phone</TableHead>
+          <TableHead>Qty</TableHead>
           <TableHead>Amount</TableHead>
+          <TableHead>Payment</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Actions</TableHead>
@@ -69,9 +83,11 @@ export const AdminOrderManagement = () => {
             <TableCell>#{item.order?.order_number}</TableCell>
             <TableCell>{item.product?.title}</TableCell>
             <TableCell>{item.shop_owner?.full_name || 'Shop Owner'}</TableCell>
-            <TableCell>Order #{item.order?.order_number}</TableCell>
+            <TableCell>{item.order?.delivery_address?.name || 'Customer'}</TableCell>
+            <TableCell>{item.order?.delivery_address?.phone || 'N/A'}</TableCell>
             <TableCell>{item.quantity}</TableCell>
             <TableCell>₹{item.price}</TableCell>
+            <TableCell>{getPaymentBadge(item.order?.payment_status)}</TableCell>
             <TableCell>{getStatusBadge(item.status)}</TableCell>
             <TableCell>{format(new Date(item.created_at), 'MMM dd, yyyy')}</TableCell>
             <TableCell>
@@ -99,6 +115,7 @@ export const AdminOrderManagement = () => {
                             <p className="text-sm">Product: {selectedOrder.product?.title}</p>
                             <p className="text-sm">Quantity: {selectedOrder.quantity}</p>
                             <p className="text-sm">Price: ₹{selectedOrder.price}</p>
+                            <p className="text-sm">Payment: {selectedOrder.order?.payment_status || 'N/A'}</p>
                           </div>
                           <div>
                             <h4 className="font-medium">Shop Owner</h4>
@@ -115,9 +132,10 @@ export const AdminOrderManagement = () => {
                           <div>
                             <h4 className="font-medium">Delivery Address</h4>
                             <div className="text-sm text-muted-foreground">
+                              <p>Name: {selectedOrder.order.delivery_address.name}</p>
                               <p>{selectedOrder.order.delivery_address.address}</p>
                               <p>{selectedOrder.order.delivery_address.city}, {selectedOrder.order.delivery_address.state}</p>
-                              <p>{selectedOrder.order.delivery_address.pincode}</p>
+                              <p>Pincode: {selectedOrder.order.delivery_address.pincode}</p>
                               <p>Phone: {selectedOrder.order.delivery_address.phone}</p>
                             </div>
                           </div>

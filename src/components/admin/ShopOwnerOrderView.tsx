@@ -193,8 +193,10 @@ export const ShopOwnerOrderView = () => {
                             <TableCell>#{item.order?.order_number}</TableCell>
                             <TableCell>{item.product?.title}</TableCell>
                             <TableCell>{item.order?.delivery_address?.name || 'Customer'}</TableCell>
+                            <TableCell>{item.order?.delivery_address?.phone || 'N/A'}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>₹{item.price}</TableCell>
+                            <TableCell>{getPaymentBadge(item.order?.payment_status)}</TableCell>
                             <TableCell>{getStatusBadge(item.status)}</TableCell>
                             <TableCell>{format(new Date(item.created_at), 'MMM dd, yyyy')}</TableCell>
                             <TableCell>
