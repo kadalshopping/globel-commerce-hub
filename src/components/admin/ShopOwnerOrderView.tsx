@@ -178,8 +178,10 @@ export const ShopOwnerOrderView = () => {
                           <TableHead>Order #</TableHead>
                           <TableHead>Product</TableHead>
                           <TableHead>Customer</TableHead>
-                          <TableHead>Quantity</TableHead>
+                          <TableHead>Phone</TableHead>
+                          <TableHead>Qty</TableHead>
                           <TableHead>Amount</TableHead>
+                          <TableHead>Payment</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Date</TableHead>
                           <TableHead>Actions</TableHead>
