@@ -41,6 +41,18 @@ export const OrderManagement = () => {
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
   };
 
+  const getPaymentBadge = (status?: string) => {
+    if (!status) return <Badge variant="secondary">Unknown</Badge>;
+    const map: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+      paid: { label: 'Paid', variant: 'default' },
+      pending: { label: 'Pending', variant: 'secondary' },
+      failed: { label: 'Failed', variant: 'destructive' },
+      cod: { label: 'COD', variant: 'outline' },
+    };
+    const info = map[status] || { label: status, variant: 'secondary' as const };
+    return <Badge variant={info.variant}>{info.label}</Badge>;
+  };
+
   const OrderItemCard = ({ item }: { item: any }) => (
     <Card className="mb-4">
       <CardContent className="p-4">
@@ -52,8 +64,9 @@ export const OrderManagement = () => {
             </p>
             <p className="text-sm font-medium">₹{item.price}</p>
           </div>
-          <div className="text-right">
+          <div className="text-right space-y-1">
             {getStatusBadge(item.status)}
+            {getPaymentBadge(item.order?.payment_status)}
             <p className="text-xs text-muted-foreground mt-1">
               {format(new Date(item.created_at), 'MMM dd, yyyy')}
             </p>
@@ -61,10 +74,10 @@ export const OrderManagement = () => {
         </div>
 
         <div className="mb-3">
-          <p className="text-sm text-muted-foreground">Customer: Order #{item.order?.order_number}</p>
           {item.order?.delivery_address && (
-            <div className="text-xs text-muted-foreground mt-1">
-              <p>Delivery Address:</p>
+            <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+              <p className="font-medium text-foreground">Customer: {item.order.delivery_address.name}</p>
+              <p>Phone: {item.order.delivery_address.phone}</p>
               <p>{item.order.delivery_address.address}</p>
               <p>{item.order.delivery_address.city}, {item.order.delivery_address.state} {item.order.delivery_address.pincode}</p>
             </div>

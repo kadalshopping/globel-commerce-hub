@@ -43,9 +43,20 @@ export const ShopOwnerOrderView = () => {
       dispatched: { label: 'Dispatched', variant: 'default' as const },
       delivered: { label: 'Delivered', variant: 'default' as const },
     };
-    
     const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status, variant: 'secondary' as const };
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
+  };
+
+  const getPaymentBadge = (status?: string) => {
+    if (!status) return <Badge variant="secondary">Unknown</Badge>;
+    const map: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+      paid: { label: 'Paid', variant: 'default' },
+      pending: { label: 'Pending', variant: 'secondary' },
+      failed: { label: 'Failed', variant: 'destructive' },
+      cod: { label: 'COD', variant: 'outline' },
+    };
+    const info = map[status] || { label: status, variant: 'secondary' as const };
+    return <Badge variant={info.variant}>{info.label}</Badge>;
   };
 
   // Calculate stats for selected shop owner
@@ -167,8 +178,10 @@ export const ShopOwnerOrderView = () => {
                           <TableHead>Order #</TableHead>
                           <TableHead>Product</TableHead>
                           <TableHead>Customer</TableHead>
-                          <TableHead>Quantity</TableHead>
+                          <TableHead>Phone</TableHead>
+                          <TableHead>Qty</TableHead>
                           <TableHead>Amount</TableHead>
+                          <TableHead>Payment</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Date</TableHead>
                           <TableHead>Actions</TableHead>
@@ -180,8 +193,10 @@ export const ShopOwnerOrderView = () => {
                             <TableCell>#{item.order?.order_number}</TableCell>
                             <TableCell>{item.product?.title}</TableCell>
                             <TableCell>{item.order?.delivery_address?.name || 'Customer'}</TableCell>
+                            <TableCell>{item.order?.delivery_address?.phone || 'N/A'}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>₹{item.price}</TableCell>
+                            <TableCell>{getPaymentBadge(item.order?.payment_status)}</TableCell>
                             <TableCell>{getStatusBadge(item.status)}</TableCell>
                             <TableCell>{format(new Date(item.created_at), 'MMM dd, yyyy')}</TableCell>
                             <TableCell>

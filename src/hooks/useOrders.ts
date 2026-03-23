@@ -36,6 +36,8 @@ export interface OrderItem {
     order_number?: string;
     delivery_address?: any;
     user_id?: string;
+    payment_status?: string;
+    status?: string;
     profiles?: {
       full_name?: string;
     };
@@ -106,7 +108,7 @@ export const useShopOwnerOrderItems = () => {
         .select(`
           *,
           product:products(id, title, images),
-          order:orders(order_number, delivery_address, user_id)
+          order:orders(order_number, delivery_address, user_id, payment_status, status)
         `)
         .order('created_at', { ascending: false });
       
@@ -127,7 +129,7 @@ export const useAllOrderItems = () => {
         .select(`
           *,
           product:products(id, title, images),
-          order:orders(order_number, delivery_address, user_id)
+          order:orders(order_number, delivery_address, user_id, payment_status, status)
         `)
         .order('created_at', { ascending: false });
       
